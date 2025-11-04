@@ -14,12 +14,15 @@ const WEBAPP_URL = process.env.WEBAPP_URL || 'https://telegram-ccg-production.up
 
 // --- Bot handlers ---
 bot.start((ctx) => {
-  ctx.reply('Привет! Нажми кнопку, чтобы открыть игровое веб-приложение 🎮', {
+  const user = ctx.from;
+  console.log(`Игрок вошёл: ${user.username || user.first_name} (ID: ${user.id})`);
+
+  ctx.reply(`👋 Привет, ${user.first_name || user.username || 'Игрок'}! Добро пожаловать в Коллекционную Карточную Игру 🎮`, {
     reply_markup: {
       inline_keyboard: [
         [
           {
-            text: 'Открыть игру',
+            text: '🚀 Открыть игру',
             web_app: { url: WEBAPP_URL }
           }
         ]
@@ -29,12 +32,12 @@ bot.start((ctx) => {
 });
 
 bot.command('newgame', (ctx) => {
-  ctx.reply('Создаю новую игру...', {
+  ctx.reply('Создаю новую игру ⚔️', {
     reply_markup: {
       inline_keyboard: [
         [
           {
-            text: 'Играть сейчас',
+            text: '🎮 Играть сейчас',
             web_app: { url: WEBAPP_URL }
           }
         ]
@@ -47,7 +50,7 @@ bot.command('newgame', (ctx) => {
 const TELEGRAM_PATH = `/telegraf/${TOKEN}`;
 app.use(bot.webhookCallback(TELEGRAM_PATH));
 
-// Serve static webapp
+// Serve static webapp (HTML + JS + CSS)
 app.use('/webapp', express.static(path.join(__dirname, 'webapp')));
 
 const PORT = process.env.PORT || 8080;
