@@ -119,7 +119,7 @@ document.getElementById('startBattle').addEventListener('click', async () => {
   const countdownEl = document.getElementById('countdown');
 
   let player = { hp: selectedSkin.hp, atk: selectedSkin.attack, def: 80 };
-  let bot = { hp: 1000, atk: 150, def: 60 };
+  let bot = { hp: 500, atk: 150, def: 60 };
 
   // ===== ОТСЧЁТ ПЕРЕД БОЕМ =====
   for (let i = 3; i > 0; i--) {
