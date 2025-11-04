@@ -1,56 +1,15 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Арена — Главное</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <title>Бой 3x3</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="shell">
-    <header class="top">
-      <div class="player">👑 <span id="playerName">Игрок</span></div>
-      <div class="stats">
-        <div class="stat">🏆 <span id="trophies">1200</span></div>
-        <div class="stat">💰 <span id="gold">100</span></div>
-      </div>
-    </header>
-
-    <main class="main">
-      <section class="hero-preview card">
-        <canvas id="arenaCanvas" width="320" height="192"></canvas>
-        <div class="preview-info">
-          <h1>АРЕНА</h1>
-          <p class="muted">Сражайся, собирай героев и улучшай их.</p>
-        </div>
-      </section>
-
-      <nav class="menu card">
-        <button class="btn primary" data-href="battle.html">⚔️ Бой</button>
-        <button class="btn" data-href="heroes.html">🦸 Мои герои</button>
-        <button class="btn" data-href="shop.html">🏪 Магазин</button>
-        <button class="btn" id="openProfile">⚙️ Профиль</button>
-      </nav>
-
-      <section class="mini-deck card">
-        <h3>Твоя коллекция (быстрый просмотр)</h3>
-        <div id="deckList" class="deck-row"></div>
-      </section>
-    </main>
-
-    <footer class="foot">
-      <small>Работает внутри Telegram Web App — поддерживается сохранение локально.</small>
-    </footer>
-  </div>
-
-  <script src="app.js"></script>
-  <script>
-    // page-specific
-    drawArenaCanvas('arenaCanvas');
-    attachNavButtons();
-    // render mini deck
-    document.addEventListener('DOMContentLoaded', () => { updateUIAll(); });
-  </script>
+  <div id="game"></div>
+  <script src="game.js"></script>
 </body>
 </html>
