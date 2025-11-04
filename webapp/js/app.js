@@ -1,106 +1,37 @@
-import { skins } from './skins.js';
 import { getUser, saveUser } from './user.js';
+import { skins } from './skins.js';
 
-const screens = {
-  home: document.getElementById('screen-home'),
-  skins: document.getElementById('screen-skins'),
-  shop: document.getElementById('screen-shop'),
-  battle: document.getElementById('screen-battle')
-};
+const user = getUser();
 
-let player = getUser();
+// элементы DOM
+const userName = document.getElementById('user-name');
+const userPhoto = document.getElementById('user-photo');
+const balance = document.getElementById('balance');
+const homeScreen = document.getElementById('screen-home');
 
-// переключение экранов
-function showScreen(name) {
-  for (const key in screens) {
-    screens[key].classList.toggle('hidden', key !== name);
-  }
-}
+// инициализация Telegram WebApp
+const tg = window.Telegram.WebApp;
+tg.expand();
 
-// обновление баланса
-function updateBalance() {
-  document.querySelector('#balance').textContent = `💰 ${player.balance}`;
-}
+// показать имя
+userName.textContent = tg.initDataUnsafe?.user?.first_name || "Гость";
+userPhoto.src = tg.initDataUnsafe?.user?.photo_url || skins[0].image;
+balance.textContent = user.balance;
 
-// обновление героя
-function updateHero() {
-  const hero = skins.find(s => s.id === player.selectedSkin);
-  document.querySelector('#hero-img').src = hero.image;
-  document.querySelector('#hero-info').textContent = `${hero.name} • HP: ${hero.hp} • Урон: ${hero.attack}`;
-}
+// контент главной страницы
+const selectedSkin = skins.find(s => s.id === user.selectedSkin);
+homeScreen.innerHTML = `
+  <div class="text-center">
+    <img src="${selectedSkin.image}" class="w-32 h-32 mx-auto rounded-full shadow-lg border-4 border-cyan-400" />
+    <h2 class="text-xl font-bold mt-3">${selectedSkin.name}</h2>
+    <p class="text-gray-300 text-sm mt-1">HP: ${selectedSkin.hp} ⚔️ ${selectedSkin.attack}</p>
+    <button id="startBattle" class="mt-5 bg-cyan-500 hover:bg-cyan-600 px-6 py-2 rounded-xl text-white font-semibold">
+      ⚔️ В бой
+    </button>
+  </div>
+`;
 
-// построить список скинов
-function renderSkins() {
-  const container = document.getElementById('skins-list');
-  container.innerHTML = '';
-  skins.forEach(skin => {
-    const owned = player.ownedSkins.includes(skin.id);
-    const selected = player.selectedSkin === skin.id;
-    const div = document.createElement('div');
-    div.className = `glass p-2 rounded-xl ${selected ? 'ring-2 ring-cyan-400' : ''}`;
-    div.innerHTML = `
-      <img src="${skin.image}" class="w-20 h-20 mx-auto" />
-      <p class="text-sm font-semibold">${skin.name}</p>
-      <p class="text-xs text-gray-400">${owned ? '✅ Куплен' : `💰 ${skin.price}`}</p>
-      <button class="bg-cyan-500 text-white px-2 py-1 rounded mt-1">${owned ? (selected ? 'Выбран' : 'Выбрать') : 'Купить'}</button>
-    `;
-    div.querySelector('button').onclick = () => {
-      if (owned) {
-        player.selectedSkin = skin.id;
-        saveUser(player);
-        renderSkins();
-        updateHero();
-      } else {
-        if (player.balance >= skin.price) {
-          player.balance -= skin.price;
-          player.ownedSkins.push(skin.id);
-          saveUser(player);
-          renderSkins();
-          updateBalance();
-        } else {
-          alert('Недостаточно средств 💸');
-        }
-      }
-    };
-    container.appendChild(div);
-  });
-}
-
-// построить магазин (можно потом объединить)
-function renderShop() {
-  const container = document.getElementById('shop-list');
-  container.innerHTML = '';
-  skins.forEach(skin => {
-    if (player.ownedSkins.includes(skin.id)) return;
-    const div = document.createElement('div');
-    div.className = 'glass p-2 rounded-xl';
-    div.innerHTML = `
-      <img src="${skin.image}" class="w-20 h-20 mx-auto" />
-      <p class="font-semibold">${skin.name}</p>
-      <p class="text-sm text-gray-400">${skin.price} 💰</p>
-      <button class="bg-green-500 text-white px-3 py-1 rounded mt-1">Купить</button>
-    `;
-    div.querySelector('button').onclick = () => {
-      if (player.balance >= skin.price) {
-        player.balance -= skin.price;
-        player.ownedSkins.push(skin.id);
-        saveUser(player);
-        renderShop();
-        updateBalance();
-      } else {
-        alert('Недостаточно 💰');
-      }
-    };
-    container.appendChild(div);
-  });
-}
-
-// навигация
-document.getElementById('btn-skins').onclick = () => { showScreen('skins'); renderSkins(); };
-document.getElementById('btn-shop').onclick = () => { showScreen('shop'); renderShop(); };
-document.getElementById('btn-home').onclick = () => { showScreen('home'); updateHero(); };
-
-// init
-updateHero();
-updateBalance();
-showScreen('home');
+// обработчик кнопки боя
+document.getElementById('startBattle').addEventListener('click', () => {
+  alert('Пока функция боя в разработке!');
+});
