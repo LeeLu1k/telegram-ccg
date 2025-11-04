@@ -1,190 +1,198 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Карточная Арена</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Lilita One', sans-serif;
-      background: linear-gradient(180deg, #3b83f6 0%, #1c4bbd 100%);
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      height: 100vh;
-      overflow: hidden;
-      user-select: none;
-    }
-
-    .top-bar {
-      width: 100%;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      background: rgba(0, 0, 0, 0.3);
-      padding: 10px;
-      font-size: 14px;
-      animation: fadeInDown 1s ease forwards;
-    }
-
-    .top-bar div {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .arena {
-      width: 90%;
-      height: 50%;
-      background: linear-gradient(180deg, #4caf50 0%, #2e7d32 100%);
-      border: 4px solid #fff;
-      border-radius: 20px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.4) inset;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      transform: scale(0.7);
-      opacity: 0;
-      animation: zoomIn 1s ease 0.5s forwards;
-    }
-
-    .arena::before, .arena::after {
-      content: '';
-      position: absolute;
-      width: 20%;
-      height: 30%;
-      background: #795548;
-      border: 3px solid #fff;
-      border-radius: 10px;
-      bottom: 10px;
-    }
-    .arena::after {
-      top: 10px;
-      bottom: auto;
-      right: 10%;
-    }
-
-    .bottom-menu {
-      display: flex;
-      justify-content: space-around;
-      width: 100%;
-      background: rgba(0,0,0,0.25);
-      padding: 10px 0;
-      border-top: 2px solid rgba(255,255,255,0.3);
-      animation: fadeInUp 1s ease 1s forwards;
-      opacity: 0;
-    }
-
-    .menu-btn {
-      background: linear-gradient(180deg, #ffd54f 0%, #f9a825 100%);
-      border: 3px solid #fff;
-      border-radius: 12px;
-      color: #000;
-      font-size: 14px;
-      font-weight: bold;
-      padding: 8px 16px;
-      box-shadow: 0 4px #b9770e;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .menu-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px #b9770e;
-    }
-
-    .menu-btn:active {
-      transform: translateY(2px) scale(0.97);
-      box-shadow: 0 2px #b9770e;
-    }
-
-    @keyframes fadeInDown {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes zoomIn {
-      from { transform: scale(0.7); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-
-    @keyframes flashGold {
-      0% { color: #fff; }
-      50% { color: #ffeb3b; transform: scale(1.2); }
-      100% { color: #fff; transform: scale(1); }
-    }
-  </style>
-  <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Карточная Арена — Pixel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="top-bar">
-    <div>👑 <span id="playerName">Игрок</span></div>
-    <div>🏆 <span id="trophies">1200</span></div>
-    <div>💰 <span id="gold">100</span></div>
+  <div id="app">
+    <header class="topbar">
+      <div class="player">👑 <span id="playerName">Игрок</span></div>
+      <div class="trophies">🏆 <span id="trophies">1200</span></div>
+      <div class="gold">💰 <span id="gold">100</span></div>
+    </header>
+
+    <main class="viewport">
+      <section class="arena-panel">
+        <canvas id="arenaCanvas" width="160" height="96"></canvas>
+        <div class="arena-hud">
+          <div class="tower left">🔷</div>
+          <div class="river"></div>
+          <div class="tower right">🔶</div>
+        </div>
+      </section>
+
+      <section class="deck-panel">
+        <div class="deck-title">Твоя колода</div>
+        <div id="deckList" class="deck-list">
+          <!-- мини-карты будут здесь -->
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottombar">
+      <button id="battleBtn" class="pixel-btn">⚔️ Бой</button>
+      <button id="deckBtn" class="pixel-btn">🃏 Колода</button>
+      <button id="clanBtn" class="pixel-btn">🏰 Клан</button>
+      <button id="shopBtn" class="pixel-btn">💎 Магазин</button>
+    </nav>
   </div>
 
-  <div class="arena">
-    <h2>АРЕНА</h2>
+  <!-- Модал результата (pixel-style) -->
+  <div id="resultModal" class="modal hidden">
+    <div class="modal-box">
+      <h3 id="resultTitle">Победа!</h3>
+      <p id="resultText">+50 золота</p>
+      <div class="modal-actions">
+        <button id="modalOk" class="pixel-btn primary">OK</button>
+      </div>
+    </div>
   </div>
 
-  <div class="bottom-menu">
-    <button id="battleBtn" class="menu-btn">⚔️ Бой</button>
-    <button class="menu-btn">🃏 Колода</button>
-    <button class="menu-btn">🏰 Клан</button>
-    <button class="menu-btn">💎 Магазин</button>
-  </div>
+<script>
+/* Pixel UI + Telegram WebApp logic */
+const tg = window.Telegram?.WebApp;
+const playerNameEl = document.getElementById('playerName');
+const goldEl = document.getElementById('gold');
+const battleBtn = document.getElementById('battleBtn');
+const modal = document.getElementById('resultModal');
+const resultTitle = document.getElementById('resultTitle');
+const resultText = document.getElementById('resultText');
+const modalOk = document.getElementById('modalOk');
 
-  <script>
-    const tg = window.Telegram?.WebApp;
-    let username = 'Игрок';
+let username = 'Игрок';
+if (tg) {
+  tg.expand();
+  const u = tg.initDataUnsafe?.user;
+  if (u) username = u.username ? '@' + u.username : (u.first_name || 'Игрок');
+  playerNameEl.textContent = username;
+} else {
+  // если открыт не в Telegram — оставляем имя Игрок
+  playerNameEl.textContent = username + ' (тест)';
+}
 
-    if (tg) {
-      tg.expand();
-      const user = tg.initDataUnsafe?.user;
-      if (user) {
-        username = user.username ? `@${user.username}` : user.first_name;
-        document.getElementById('playerName').textContent = username;
-      }
+/* Баланс */
+let gold = parseInt(localStorage.getItem('gold') || '100', 10);
+goldEl.textContent = gold;
+
+/* Функция обновления золота с анимацией */
+function updateGold(delta) {
+  gold = Math.max(0, gold + delta);
+  localStorage.setItem('gold', String(gold));
+  goldEl.textContent = gold;
+  goldEl.classList.add('flash');
+  setTimeout(()=> goldEl.classList.remove('flash'), 500);
+}
+
+/* Простая демо-колода (мини-карты) */
+const deck = [
+  { id:1,name:'Воин',atk:3,def:2},
+  { id:2,name:'Лучник',atk:2,def:1},
+  { id:3,name:'Маг',atk:4,def:1},
+  { id:4,name:'Танк',atk:1,def:5}
+];
+const deckList = document.getElementById('deckList');
+function renderDeck(){
+  deckList.innerHTML = '';
+  deck.forEach(c=>{
+    const el = document.createElement('div');
+    el.className = 'mini-card';
+    el.innerHTML = `<div class="card-sprite" data-id="${c.id}"></div>
+                    <div class="card-meta"><div class="cname">${c.name}</div>
+                    <div class="cstats">ATK ${c.atk} • DEF ${c.def}</div></div>`;
+    deckList.appendChild(el);
+  });
+}
+renderDeck();
+
+/* Battle button: рандомный результат, modal */
+battleBtn.addEventListener('click', ()=>{
+  // имитация короткой подготовки: play canvas flash
+  playBattleFlash();
+  setTimeout(()=> {
+    const win = Math.random() < 0.55; // 55% win chance (напр.)
+    if (win) {
+      updateGold(50);
+      showResult(true, '+50 золота');
     } else {
-      document.querySelector('.arena').innerHTML = '<h3>Запуск возможен только внутри Telegram</h3>';
+      updateGold(-20);
+      showResult(false, '-20 золота');
     }
+  }, 700);
+});
 
-    // Загрузка баланса
-    let gold = parseInt(localStorage.getItem('gold') || '100');
-    document.getElementById('gold').textContent = gold;
+function showResult(isWin, text) {
+  modal.classList.remove('hidden');
+  modal.classList.add('show');
+  resultTitle.textContent = isWin ? '🏆 Победа!' : '💥 Поражение';
+  resultText.textContent = text;
+  // при победе подсветить зелёным, при поражении — красным
+  modal.querySelector('.modal-box').classList.toggle('win', isWin);
+  modal.querySelector('.modal-box').classList.toggle('lose', !isWin);
+}
 
-    const goldElement = document.getElementById('gold');
+modalOk.addEventListener('click', ()=> {
+  modal.classList.remove('show');
+  modal.classList.add('hidden');
+});
 
-    function updateGold(change) {
-      gold += change;
-      if (gold < 0) gold = 0;
-      localStorage.setItem('gold', gold);
-      goldElement.textContent = gold;
-      goldElement.style.animation = 'flashGold 0.5s';
-      setTimeout(() => goldElement.style.animation = '', 500);
+/* Arena pixel drawing: low-res canvas scaled up (pixel art) */
+const canvas = document.getElementById('arenaCanvas');
+const ctx = canvas.getContext('2d');
+function drawArena() {
+  // tiny pixel grid: 40x24 (we set 160x96 but think in 40x24)
+  const w = 40, h = 24;
+  const off = document.createElement('canvas');
+  off.width = w; off.height = h;
+  const octx = off.getContext('2d');
+
+  // sky / grass blocks
+  for(let y=0;y<h;y++){
+    for(let x=0;x<w;x++){
+      if (y < 6) octx.fillStyle = '#79b7ff'; // sky
+      else if (y < 10) octx.fillStyle = '#7fd3a4'; // light grass
+      else if (y < 18) octx.fillStyle = '#4caf50'; // main field
+      else octx.fillStyle = '#3b7c3b';
+      octx.fillRect(x,y,1,1);
     }
+  }
+  // river center
+  for(let x=12;x<28;x++){
+    for(let y=10;y<14;y++){
+      octx.fillStyle = '#3aa0ff';
+      octx.fillRect(x,y,1,1);
+    }
+  }
+  // towers (left/right)
+  for(let y=6;y<12;y++){
+    octx.fillStyle = '#6b4c2b';
+    octx.fillRect(3,y,3,1);
+    octx.fillRect(w-6,y,3,1);
+  }
+  // castle flags
+  octx.fillStyle = '#ffdf57';
+  octx.fillRect(4,5,1,1);
+  octx.fillRect(w-5,5,1,1);
 
-    // Логика боя
-    const battleBtn = document.getElementById('battleBtn');
-    battleBtn.addEventListener('click', () => {
-      const result = Math.random() < 0.5 ? 'win' : 'lose';
-      if (result === 'win') {
-        updateGold(50);
-        alert('🏆 Победа! +50 золота');
-      } else {
-        updateGold(-20);
-        alert('😞 Поражение! -20 золота');
-      }
-    });
-  </script>
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(off,0,0,canvas.width,canvas.height);
+}
+drawArena();
+
+function playBattleFlash(){
+  canvas.classList.add('flash-anim');
+  setTimeout(()=> canvas.classList.remove('flash-anim'), 350);
+}
+
+/* init */
+(function init(){
+  // ensure gold shown
+  goldEl.textContent = gold;
+})();
+</script>
 </body>
 </html>
