@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Mini Battle 3x3 — исправлено</title>
+<title>MiniBattle 3x3</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
@@ -29,55 +29,84 @@
 </head>
 <body class="home flex flex-col min-h-screen">
 
-<header class="glass flex items-center gap-3 p-4 border-b border-white/10">
-  <img id="user-photo" class="w-10 h-10 rounded-full border-2 border-cyan-400" />
-  <span id="user-name" class="text-lg font-semibold"></span>
-</header>
-
-<main id="app" class="flex-1 relative overflow-hidden">
-  <!-- HOME -->
-  <section id="screen-home" class="fade active absolute inset-0 flex flex-col items-center justify-center text-center p-6">
-    <div class="glass p-6 rounded-2xl w-full max-w-sm">
-      <h1 class="text-3xl font-bold text-cyan-400 mb-3">Твой герой</h1>
-      <img id="hero-img" src="img/skins/spikly.png" class="mx-auto w-24 h-24 mb-3 rounded-full border-2 border-cyan-400" />
-      <p id="hero-info" class="text-gray-300 mb-4">HP: — • Урон: — • Щит: —</p>
-      <button id="toBattle" class="bg-gradient-to-r from-cyan-500 to-blue-500 py-3 px-10 rounded-xl font-semibold">⚔️ В бой</button>
+  <!-- HEADER -->
+  <header class="glass flex items-center justify-between p-3 border-b border-white/10">
+    <div class="flex items-center gap-2">
+      <img id="user-photo" class="w-9 h-9 rounded-full border-2 border-cyan-400" />
+      <span id="user-name" class="text-sm font-semibold"></span>
     </div>
-  </section>
-
-  <!-- BATTLE -->
-  <section id="screen-battle" class="fade absolute inset-0 flex flex-col items-center justify-center text-center hidden p-6">
-    <div class="cloud w-32 h-20 top-20 left-[-150px]" style="animation-delay:0s"></div>
-    <div class="cloud w-40 h-24 top-40 left-[-200px]" style="animation-delay:10s"></div>
-    <div class="cloud w-28 h-18 top-60 left-[-250px]" style="animation-delay:20s"></div>
-
-    <h2 class="text-2xl text-blue-700 font-bold mb-4 drop-shadow-lg">☁️ Небесная Арена</h2>
-    <div id="countdown" class="text-3xl font-bold text-gray-800 mb-4"></div>
-
-    <div id="battle-area" class="hidden w-full max-w-md flex justify-between items-center px-6 relative">
-      <div id="player" class="glass p-4 rounded-xl w-[45%] relative">
-        <img id="player-img" src="img/skins/spikly.png" class="w-20 h-20 rounded-full border-2 border-cyan-400 mx-auto mb-2" />
-        <p id="player-hp" class="text-gray-900">❤️ 0</p>
-      </div>
-      <div id="bot" class="glass p-4 rounded-xl w-[45%] relative">
-        <img id="bot-img" src="img/skins/bullit.png" class="w-20 h-20 rounded-full border-2 border-rose-400 mx-auto mb-2" />
-        <p id="bot-hp" class="text-gray-900">❤️ 0</p>
-      </div>
+    <div class="flex items-center gap-1 text-sm text-gray-200">
+      <img src="https://cdn-icons-png.flaticon.com/512/825/825540.png" class="w-4 h-4">
+      <span id="user-balance" class="font-semibold">0</span>
     </div>
+  </header>
 
-    <p id="battle-log" class="text-gray-900 mt-6 text-sm min-h-[1.6rem]"></p>
-  </section>
-</main>
+  <!-- MAIN -->
+  <main id="app" class="flex-1 relative overflow-hidden">
+    <!-- HOME -->
+    <section id="screen-home" class="fade active absolute inset-0 flex flex-col items-center justify-between text-center p-5 pb-20">
+      <div class="w-3/4 mt-5">
+        <div class="text-xs text-gray-300 mb-1">Уровень 1</div>
+        <div class="w-full h-2 bg-white/20 rounded-full overflow-hidden">
+          <div class="h-full bg-cyan-400 w-1/4 transition-all duration-700"></div>
+        </div>
+      </div>
 
-<footer class="text-center text-gray-400 text-xs py-3 glass border-t border-white/10">© 2025 MiniBattle Studio</footer>
+      <div class="glass p-5 rounded-2xl w-full max-w-sm mt-4">
+        <img id="hero-img" src="img/skins/spikly.png" class="mx-auto w-24 h-24 mb-3 rounded-full border-2 border-cyan-400 shadow" />
+        <h1 id="hero-name" class="text-2xl font-bold text-cyan-400 mb-1">Твой герой</h1>
+        <p id="hero-info" class="text-gray-300 mb-4 text-sm">HP: — • Урон: — • Щит: —</p>
+        <button id="toBattle" class="bg-gradient-to-r from-cyan-500 to-blue-500 py-3 px-10 rounded-xl font-semibold text-white shadow-md hover:brightness-110 active:scale-95 transition-all">
+          ⚔️ В бой
+        </button>
+      </div>
+    </section>
+
+    <!-- BATTLE -->
+    <section id="screen-battle" class="fade absolute inset-0 flex flex-col items-center justify-center text-center hidden p-6">
+      <div class="cloud w-32 h-20 top-20 left-[-150px]" style="animation-delay:0s"></div>
+      <div class="cloud w-40 h-24 top-40 left-[-200px]" style="animation-delay:10s"></div>
+      <div class="cloud w-28 h-18 top-60 left-[-250px]" style="animation-delay:20s"></div>
+
+      <h2 class="text-2xl text-blue-700 font-bold mb-4 drop-shadow-lg">☁️ Небесная Арена</h2>
+      <div id="countdown" class="text-3xl font-bold text-gray-800 mb-4"></div>
+
+      <div id="battle-area" class="hidden w-full max-w-md flex justify-between items-center px-6 relative">
+        <div id="player" class="glass p-4 rounded-xl w-[45%] relative">
+          <img id="player-img" src="img/skins/spikly.png" class="w-20 h-20 rounded-full border-2 border-cyan-400 mx-auto mb-2" />
+          <p id="player-hp" class="text-gray-900">❤️ 0</p>
+        </div>
+        <div id="bot" class="glass p-4 rounded-xl w-[45%] relative">
+          <img id="bot-img" src="img/skins/bullit.png" class="w-20 h-20 rounded-full border-2 border-rose-400 mx-auto mb-2" />
+          <p id="bot-hp" class="text-gray-900">❤️ 0</p>
+        </div>
+      </div>
+
+      <p id="battle-log" class="text-gray-900 mt-6 text-sm min-h-[1.6rem]"></p>
+    </section>
+  </main>
+
+  <!-- NAV -->
+  <nav class="glass border-t border-white/10 flex justify-around py-2 text-xs text-gray-200 backdrop-blur-md">
+    <button class="flex flex-col items-center opacity-80">
+      <img src="https://cdn-icons-png.flaticon.com/512/4149/4149670.png" class="w-5 h-5 mb-1">
+      Скин
+    </button>
+    <button class="flex flex-col items-center opacity-80">
+      <img src="https://cdn-icons-png.flaticon.com/512/126/126510.png" class="w-5 h-5 mb-1">
+      Магазин
+    </button>
+    <button class="flex flex-col items-center opacity-80">
+      <img src="https://cdn-icons-png.flaticon.com/512/2656/2656875.png" class="w-5 h-5 mb-1">
+      Сундук
+    </button>
+  </nav>
 
 <script type="module">
   import { cards } from './js/skins.js';
   import { initUser } from './js/utils.js';
-  // init telegram info
   initUser();
 
-  // elements
   const screenHome = document.getElementById('screen-home');
   const screenBattle = document.getElementById('screen-battle');
   const body = document.body;
@@ -85,11 +114,11 @@
   const battleArea = document.getElementById('battle-area');
   const battleLog = document.getElementById('battle-log');
 
-  const hero = cards[0]; // подарок/по умолчанию
+  const hero = cards[0];
   document.getElementById('hero-img').src = hero.image;
+  document.getElementById('hero-name').textContent = hero.name;
   document.getElementById('hero-info').textContent = `${hero.type} • HP: ${hero.hp} • Атака: ${hero.attack} • Щит: ${hero.defense}`;
 
-  // reset (на каждый старт боя должно создаваться новое состояние)
   function makeNewStats() {
     return {
       player: { hp: hero.hp, dmg: hero.attack, def: hero.defense },
@@ -99,10 +128,8 @@
 
   let state = makeNewStats();
 
-  // helper: show screen by id (SPA)
   function showScreen(id) {
-    const screens = ['screen-home','screen-battle'];
-    screens.forEach(sid => {
+    ['screen-home','screen-battle'].forEach(sid => {
       const el = document.getElementById(sid);
       if (sid === id) {
         el.classList.remove('hidden');
@@ -114,141 +141,89 @@
     });
   }
 
-  // place HP safely (never < 0). Also hide negative glitch.
   function setHPDisplays() {
-    const ph = Math.max(0, Math.floor(state.player.hp));
-    const bh = Math.max(0, Math.floor(state.bot.hp));
-    document.getElementById('player-hp').textContent = `❤️ ${ph}`;
-    document.getElementById('bot-hp').textContent = `❤️ ${bh}`;
+    document.getElementById('player-hp').textContent = `❤️ ${Math.max(0, Math.floor(state.player.hp))}`;
+    document.getElementById('bot-hp').textContent = `❤️ ${Math.max(0, Math.floor(state.bot.hp))}`;
   }
 
-  // show floating damage near element (element is container div)
   function showDamage(containerEl, dmg) {
-    const rect = containerEl.getBoundingClientRect();
-    // create damage element positioned relative to container
     const dmgEl = document.createElement('div');
     dmgEl.className = 'damage-text';
     dmgEl.textContent = `-${dmg}`;
-    // place near top-center of container
     dmgEl.style.left = '50%';
     dmgEl.style.transform = 'translateX(-50%)';
     dmgEl.style.top = '8px';
     containerEl.appendChild(dmgEl);
-    // remove after animation
-    setTimeout(()=> { if (dmgEl && dmgEl.parentNode) dmgEl.remove(); }, 950);
+    setTimeout(()=> dmgEl.remove(), 950);
   }
 
-  // main transition: home -> battle
   document.getElementById('toBattle').onclick = async () => {
-    // reset any previous state
     state = makeNewStats();
     clearBattleVisuals();
-
-    // change screen and body class
     showScreen('screen-battle');
-    body.classList.remove('home'); body.classList.add('battle');
-
-    // initial hp display
+    body.classList.replace('home','battle');
     setHPDisplays();
 
-    // сначала скрываем бой (чтобы не было видно при отсчёте)
     battleArea.classList.add('hidden');
-    
-    // показываем только счётчик
     for (let i = 5; i >= 0; i--) {
       countdownEl.textContent = i === 0 ? 'Старт!' : `Старт через ${i}...`;
       await new Promise(r => setTimeout(r, 1000));
     }
-    
-    // убираем счётчик и включаем арену
     countdownEl.textContent = '';
     battleArea.classList.remove('hidden');
     startAutoBattle();
-
-    countdownEl.textContent = '';
-    startAutoBattle();
   };
 
-  // remove any lingering damage texts/logs
   function clearBattleVisuals() {
     battleLog.textContent = '';
-    // remove existing damage elements if any
     document.querySelectorAll('.damage-text').forEach(n => n.remove());
-    // reset animations
     document.getElementById('player').style.animation = '';
     document.getElementById('bot').style.animation = '';
   }
 
   async function startAutoBattle() {
     battleArea.classList.remove('hidden');
-    // update images (hero and bot)
     document.getElementById('player-img').src = hero.image;
     document.getElementById('bot-img').src = cards[1]?.image || 'img/skins/bullit.png';
-
     setHPDisplays();
 
     const playerEl = document.getElementById('player');
     const botEl = document.getElementById('bot');
-
     let turn = 0;
-    // loop until one is dead
-    while (state.player.hp > 0 && state.bot.hp > 0) {
-      await new Promise(r => setTimeout(r, 700)); // small delay between turns
 
+    while (state.player.hp > 0 && state.bot.hp > 0) {
+      await new Promise(r => setTimeout(r, 700));
       if (turn % 2 === 0) {
-        // player attack
         playerEl.style.animation = "attackPlayer 600ms ease";
         const dmg = Math.max(1, Math.round(state.player.dmg - state.bot.def));
-        state.bot.hp = Math.max(0, state.bot.hp - dmg); // clamp >=0
+        state.bot.hp = Math.max(0, state.bot.hp - dmg);
         showDamage(botEl, dmg);
-        setHPDisplays();
         battleLog.textContent = `Ты нанёс ${dmg} урона`;
       } else {
-        // bot attack
         botEl.style.animation = "attackBot 600ms ease";
         const dmg = Math.max(1, Math.round(state.bot.dmg - state.player.def));
         state.player.hp = Math.max(0, state.player.hp - dmg);
         showDamage(playerEl, dmg);
-        setHPDisplays();
         battleLog.textContent = `Бот нанёс ${dmg} урона`;
       }
-
-      // wait for animation end then clear animations to allow re-trigger
+      setHPDisplays();
       await new Promise(r => setTimeout(r, 650));
       playerEl.style.animation = '';
       botEl.style.animation = '';
-
-      // break if someone died
       if (state.bot.hp <= 0 || state.player.hp <= 0) break;
       turn++;
     }
 
-    // final log: ensure hp shows exactly 0 for dead
     setHPDisplays();
-    const victory = state.bot.hp <= 0 && state.player.hp > 0;
-    battleLog.textContent = victory ? "🏆 Победа!" : "💀 Поражение!";
-
-    // pause so player sees result, then auto-return to home and reset everything
+    battleLog.textContent = state.bot.hp <= 0 ? "🏆 Победа!" : "💀 Поражение!";
     await new Promise(r => setTimeout(r, 2000));
-
-    // cleanup and reset (important: do not persist HP)
     clearBattleVisuals();
-    // ensure final displays show 0 (already clamped), but do not save to hero
-    document.getElementById('player-hp').textContent = `❤️ ${Math.max(0, Math.floor(state.player.hp))}`;
-    document.getElementById('bot-hp').textContent = `❤️ ${Math.max(0, Math.floor(state.bot.hp))}`;
 
-    // short delay for UX, then return to home
     await new Promise(r => setTimeout(r, 600));
-    // switch back
     showScreen('screen-home');
-    body.classList.remove('battle');
-    body.classList.add('home');
-
-    // reset stats in memory for next fight
+    body.classList.replace('battle','home');
     state = makeNewStats();
-    setHPDisplays(); // will reflect reset (player HP back to full in next battle)
-    // clear log
-    setTimeout(()=> { battleLog.textContent = ''; countdownEl.textContent = ''; }, 200);
+    setHPDisplays();
   }
 </script>
 </body>
