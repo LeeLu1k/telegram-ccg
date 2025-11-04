@@ -3,29 +3,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mini Battle 3x3</title>
+  <title>⚔️ Mini Battle 3x3</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    /* Градиентный фон с анимацией */
+    body {
+      background: linear-gradient(-45deg, #1e1e2f, #121212, #0f2027, #203a43, #2c5364);
+      background-size: 400% 400%;
+      animation: gradientMove 15s ease infinite;
+    }
+
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Мягкий неон вокруг карточек */
+    .glass {
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+    }
+
+    button {
+      transition: all 0.25s ease;
+    }
+    button:hover {
+      transform: scale(1.05);
+    }
+  </style>
 </head>
-<body class="bg-gray-900 text-white flex flex-col min-h-screen font-sans">
-  <!-- Header -->
-  <header class="flex items-center gap-3 p-4 border-b border-gray-800 bg-gray-800/40">
-    <img id="user-photo" src="" alt="avatar" class="w-10 h-10 rounded-full border-2 border-teal-400">
-    <span id="user-name" class="text-lg font-medium"></span>
+
+<body class="flex flex-col min-h-screen text-white font-sans overflow-hidden">
+
+  <!-- HEADER -->
+  <header class="glass flex items-center gap-3 p-4 border-b border-white/10">
+    <img id="user-photo" src="" alt="avatar" class="w-10 h-10 rounded-full border-2 border-cyan-400 shadow-md">
+    <span id="user-name" class="text-lg font-semibold tracking-wide"></span>
   </header>
 
-  <!-- Main -->
-  <main class="flex flex-col items-center justify-center flex-grow text-center p-6">
-    <h1 class="text-3xl font-bold text-teal-400 mb-2">⚔️ Mini Battle 3x3</h1>
-    <p class="text-gray-400 mb-6 text-sm">Мобильная арена сражений прямо в Telegram</p>
-    <button id="start-btn"
-      class="bg-teal-500 hover:bg-teal-400 text-white font-medium py-3 px-8 rounded-xl text-lg transition">
-      Начать игру
-    </button>
+  <!-- MAIN -->
+  <main class="flex-1 flex flex-col items-center justify-center text-center p-6">
+    <div class="glass px-6 py-8 rounded-2xl max-w-sm w-full shadow-lg">
+      <h1 class="text-4xl font-bold mb-3 text-cyan-400 drop-shadow-lg">⚔️ Mini Battle 3x3</h1>
+      <p class="text-gray-300 text-sm mb-6">Арена будущего. Побеждай в дуэлях прямо внутри Telegram!</p>
+      <button id="start-btn"
+        class="bg-gradient-to-r from-cyan-500 to-blue-500 py-3 px-10 rounded-xl text-lg font-semibold shadow-md hover:from-blue-400 hover:to-cyan-400">
+        🚀 Начать игру
+      </button>
+    </div>
   </main>
 
-  <!-- Footer -->
-  <footer class="text-center text-gray-500 text-xs py-3 border-t border-gray-800">
+  <!-- FOOTER -->
+  <footer class="text-center text-gray-400 text-xs py-3 glass border-t border-white/10">
     © 2025 MiniBattle Studio
   </footer>
 
@@ -46,10 +80,11 @@
       photo.src = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
     }
 
+    // Кнопка "Начать игру"
     document.getElementById("start-btn").addEventListener("click", () => {
       tg.showPopup({
-        title: "⚔️ В разработке",
-        message: "Боевая арена скоро появится!",
+        title: "⚔️ Арена в разработке",
+        message: "Скоро вы сможете сразиться 3x3 в реальном времени!",
         buttons: [{ type: "close" }]
       });
     });
