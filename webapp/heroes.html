@@ -1,29 +1,31 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Мои герои — Карточная Арена</title>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Арена — Мои герои</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="wrap">
-    <header class="topbar">
-      <div class="back"><button class="small-btn" data-href="index.html">◀ Назад</button></div>
+  <div class="shell">
+    <header class="top">
+      <div><button class="small" data-href="index.html">◀ Назад</button></div>
       <div class="player">👑 <span id="playerName">Игрок</span></div>
-      <div class="gold">💰 <span id="gold">100</span></div>
+      <div class="stats">💰 <span id="gold">100</span></div>
     </header>
 
-    <main class="main-area">
-      <section class="heroes-panel">
-        <h2 class="pixel-title">Мои герои</h2>
+    <main class="main">
+      <section class="heroes-panel card">
+        <h2>Мои герои</h2>
         <div id="heroesList" class="heroes-list"></div>
 
-        <div style="margin-top:10px;display:flex;gap:8px">
-          <button id="addHero" class="pixel-btn">➕ Добавить (тест)</button>
-          <button id="resetHeroes" class="pixel-btn">♻️ Сбросить</button>
+        <div class="hero-actions">
+          <button id="addHero" class="btn">➕ Добавить (тест)</button>
+          <button id="resetHeroes" class="btn">♻️ Сбросить</button>
         </div>
+
+        <p class="muted">Прокачка: стоимость 100 золота, макс уровень 5.</p>
       </section>
     </main>
   </div>
@@ -31,22 +33,22 @@
   <script src="app.js"></script>
   <script>
     attachNavButtons();
-    renderHeroes();
+    document.addEventListener('DOMContentLoaded', () => { updateUIAll(); });
 
-    document.getElementById('addHero').addEventListener('click', ()=>{
+    // debug add hero
+    document.getElementById('addHero').addEventListener('click', () => {
       const name = prompt('Имя героя:', 'Новый герой');
       if (!name) return;
-      addHero({name, lvl:1, atk:2, def:2, id:('h_'+Math.random().toString(36).slice(2,9)), skin:'default'});
-      alert('Герой добавлен (тест).');
-      renderHeroes();
+      addHero({ id: genId(), name, lvl:1, atk:2, def:2, skin:'default' });
+      updateUIAll();
     });
 
-    document.getElementById('resetHeroes').addEventListener('click', ()=>{
-      if (!confirm('Сбросить всех героев? (удалит и подаренного)')) return;
+    document.getElementById('resetHeroes').addEventListener('click', () => {
+      if (!confirm('Сбросить всех героев?')) return;
       const profile = getProfile();
       profile.heroes = [];
       saveProfile(profile);
-      renderHeroes();
+      updateUIAll();
     });
   </script>
 </body>
