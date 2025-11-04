@@ -3,9 +3,22 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Арена — Бой</title>
+  <title>Бой — Арена</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* небольшие правки под бой */
+    .battle-area { position:relative; padding:12px; display:flex; flex-direction:column; gap:12px; align-items:center; }
+    #battleCanvas { width:100%; max-width:840px; background:linear-gradient(180deg,#9fd8ff,#5fb6ff); border-radius:10px; display:block; }
+    .hud { display:flex; justify-content:space-between; width:100%; max-width:840px; gap:12px; margin-top:8px; }
+    .panel { background:linear-gradient(180deg,rgba(0,0,0,0.12), rgba(255,255,255,0.02)); padding:10px; border-radius:10px; flex:1; box-shadow:0 8px 20px rgba(0,0,0,0.4); }
+    .hpbar { height:12px; background:rgba(0,0,0,0.12); border-radius:8px; overflow:hidden; position:relative; }
+    .hpbar .fill { height:100%; width:100%; background:linear-gradient(90deg,#e84c4c,#ffb3b3); transition:width 350ms linear; }
+    .xp { font-size:12px; color:#eaf6ff; margin-top:6px; }
+    .damage-float { position:absolute; pointer-events:none; font-weight:800; font-size:18px; color:#ffdf57; text-shadow:0 2px 6px rgba(0,0,0,0.7) }
+    .turn-indicator { text-align:center; font-weight:700; color:#05202a; background:#ffd54f; padding:6px 10px; border-radius:8px; display:inline-block; }
+    .modal .modal-card { min-width:300px }
+  </style>
 </head>
 <body>
   <div class="shell">
@@ -17,73 +30,476 @@
 
     <main class="main">
       <section class="battle-area card">
-        <canvas id="battleCanvas" width="420" height="240"></canvas>
-        <div class="battle-hud">
-          <div class="side">👾 Противник</div>
-          <div class="vs">VS</div>
-          <div class="side">🛡️ Ты</div>
-        </div>
-      </section>
+        <!-- canvas: мы рисуем сцену (фон, персонажи) -->
+        <canvas id="battleCanvas" width="840" height="360"></canvas>
 
-      <div class="controls card">
-        <button id="startFight" class="btn primary large">▶ Начать бой</button>
-        <p class="muted">Победа +50 золота, Поражение −20. Результат определяется случайно.</p>
-      </div>
+        <!-- HUD панели: игрок / противник -->
+        <div class="hud">
+          <div class="panel" id="playerPanel">
+            <div style="display:flex;align-items:center;gap:8px">
+              <img id="playerSkinPreview" src="assets/hero.png" alt="Hero" style="width:56px;height:56px;border-radius:8px;object-fit:cover">
+              <div>
+                <div id="playerNameSmall" style="font-weight:800">Игрок</div>
+                <div class="muted" id="playerLvl">Ур. 1 • ATK 3 • DEF 2</div>
+              </div>
+            </div>
+            <div style="margin-top:8px">
+              <div class="hpbar" aria-hidden><div id="playerHPFill" class="fill" style="width:100%"></div></div>
+              <div class="xp" id="playerXP">XP: 0</div>
+            </div>
+          </div>
+
+          <div class="panel" id="enemyPanel" style="text-align:right">
+            <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+              <div>
+                <div id="enemyNameSmall" style="font-weight:800">Противник</div>
+                <div class="muted" id="enemyLvl">Ур. 1 • ATK 2 • DEF 1</div>
+              </div>
+              <img id="enemySkinPreview" src="assets/enemy.png" alt="Enemy" style="width:56px;height:56px;border-radius:8px;object-fit:cover">
+            </div>
+            <div style="margin-top:8px">
+              <div class="hpbar" aria-hidden><div id="enemyHPFill" class="fill" style="width:100%"></div></div>
+              <div class="xp" id="enemyXP">XP: 0</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:center;margin-top:8px">
+          <div class="turn-indicator" id="turnIndicator">Ход: —</div>
+        </div>
+
+        <div style="display:flex;gap:12px;justify-content:center;margin-top:8px">
+          <button id="startFight" class="btn primary large">▶ Начать бой</button>
+          <button id="autoFight" class="btn">⚙️ Автоматически x3</button>
+        </div>
+
+      </section>
     </main>
   </div>
 
-  <!-- modal -->
+  <!-- результат -->
   <div id="resultModal" class="modal hidden">
     <div class="modal-card">
       <h2 id="resultTitle">Результат</h2>
-      <p id="resultText"></p>
-      <div class="modal-actions">
-        <button id="modalOk" class="btn primary">OK</button>
+      <p id="resultBody"></p>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
+        <button id="resultOk" class="btn primary">OK</button>
+        <button id="resultRetry" class="btn">Ещё раз</button>
       </div>
     </div>
   </div>
 
   <script src="app.js"></script>
   <script>
-    drawArenaCanvas('battleCanvas');
-    attachNavButtons();
-    document.addEventListener('DOMContentLoaded', updateUIAll);
+/*
+Battle animation script.
+- Uses localStorage profile under ccg_profile_<tgId|anon>
+- You should drop your hero sprite to webapp/assets/hero.png
+  and enemy sprite to webapp/assets/enemy.png (or change src attributes above)
+*/
 
-    const startBtn = document.getElementById('startFight');
-    const modal = document.getElementById('resultModal');
-    const resTitle = document.getElementById('resultTitle');
-    const resText = document.getElementById('resultText');
-    const modalOk = document.getElementById('modalOk');
+/* ---------- Utilities to read/save profile (same key logic as app.js) ---------- */
+const tg = window.Telegram?.WebApp;
+function getUserSuffix(){ try{ const u = tg?.initDataUnsafe?.user; if(u?.id) return String(u.id);}catch(e){} return 'anon'; }
+const STORAGE_KEY = 'ccg_profile_' + getUserSuffix();
 
-    startBtn.addEventListener('click', () => {
-      flashCanvas('battleCanvas');
-      startBtn.disabled = true;
-      setTimeout(() => {
-        const win = Math.random() < 0.55;
-        if (win) {
-          changeGold(50);
-          resTitle.textContent = '🏆 Победа!';
-          resText.textContent = '+50 золота';
-          modal.querySelector('.modal-card').classList.add('win');
-          modal.querySelector('.modal-card').classList.remove('lose');
-        } else {
-          changeGold(-20);
-          resTitle.textContent = '💥 Поражение';
-          resText.textContent = '-20 золота';
-          modal.querySelector('.modal-card').classList.add('lose');
-          modal.querySelector('.modal-card').classList.remove('win');
-        }
-        modal.classList.remove('hidden');
-        modal.classList.add('show');
-        startBtn.disabled = false;
-        updateUIAll();
-      }, 700);
-    });
+function loadProfile(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(!raw){
+    // fallback (shouldn't happen because app.js creates it), create small default
+    const u = tg?.initDataUnsafe?.user;
+    const name = u ? (u.username ? '@'+u.username : (u.first_name||'Игрок')) : 'Игрок';
+    const p = { name, gold:100, heroes:[{id:'h_start',name:'⚔️ Рыцарь',lvl:1,atk:3,def:2,hpMax:50,xp:0}], createdAt:Date.now() };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+    return p;
+  }
+  try { return JSON.parse(raw); } catch(e){ localStorage.removeItem(STORAGE_KEY); return loadProfile(); }
+}
 
-    modalOk.addEventListener('click', () => {
-      modal.classList.remove('show');
-      modal.classList.add('hidden');
-    });
+function saveProfile(p){ localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); updateUITop(); }
+
+function changeGold(delta){ const p = loadProfile(); p.gold = Math.max(0,(p.gold||0)+delta); saveProfile(p); return p.gold; }
+
+/* ---------- Simple battle model ---------- */
+class Combatant {
+  constructor(cfg){
+    // cfg: { id, name, lvl, atk, def, hpMax, spriteSrc }
+    this.id = cfg.id || ('c_' + Math.random().toString(36).slice(2,8));
+    this.name = cfg.name;
+    this.lvl = cfg.lvl || 1;
+    this.atk = cfg.atk || 1;
+    this.def = cfg.def || 0;
+    this.hpMax = cfg.hpMax || 50;
+    this.hp = cfg.hpMax;
+    this.xp = cfg.xp || 0;
+    this.sprite = new Image();
+    this.sprite.src = cfg.spriteSrc || '';
+  }
+}
+
+/* ---------- Visual engine ---------- */
+const canvas = document.getElementById('battleCanvas');
+const ctx = canvas.getContext('2d');
+
+const layout = {
+  leftX: 120,
+  rightX: canvas.width - 120,
+  yBase: canvas.height * 0.55,
+  spriteW: 160,
+  spriteH: 160
+};
+
+let player, enemy;
+let isRunning = false;
+let autoMode = false;
+
+function initBattle() {
+  const profile = loadProfile();
+  const hero = profile.heroes && profile.heroes[0] ? profile.heroes[0] : { id:'h_start', name:'⚔️ Рыцарь', lvl:1, atk:3, def:2, hpMax:50, xp:0 };
+  // set sprites AFTER user places images: use preview images in HUD for convenience
+  const playerSpriteSrc = document.getElementById('playerSkinPreview').src || 'assets/hero.png';
+  const enemySpriteSrc = document.getElementById('enemySkinPreview').src || 'assets/enemy.png';
+
+  player = new Combatant({
+    id: hero.id,
+    name: hero.name,
+    lvl: hero.lvl || 1,
+    atk: hero.atk || 3,
+    def: hero.def || 2,
+    hpMax: hero.hpMax || 50,
+    xp: hero.xp || 0,
+    spriteSrc: playerSpriteSrc
+  });
+
+  // enemy is generated dynamically (scales with player lvl)
+  const diffScale = Math.max(1, player.lvl * 1.0);
+  enemy = new Combatant({
+    id: 'enemy_'+Math.random().toString(36).slice(2,6),
+    name: 'Локальный боец',
+    lvl: Math.max(1, Math.round(player.lvl * (0.8 + Math.random()*0.6))),
+    atk: Math.max(1, Math.round(player.atk * (0.9 + Math.random()*0.5))),
+    def: Math.max(0, Math.round(player.def * (0.7 + Math.random()*0.6))),
+    hpMax: Math.max(35, Math.round(player.hpMax * (0.9 + Math.random()*0.6))),
+    xp: 0,
+    spriteSrc: enemySpriteSrc
+  });
+
+  // reset hp
+  player.hp = player.hpMax;
+  enemy.hp = enemy.hpMax;
+
+  // update HUD texts
+  document.getElementById('playerName').textContent = loadProfile().name;
+  document.getElementById('playerNameSmall').textContent = player.name;
+  document.getElementById('playerLvl').textContent = `Ур. ${player.lvl} • ATK ${player.atk} • DEF ${player.def}`;
+  document.getElementById('enemyNameSmall').textContent = enemy.name;
+  document.getElementById('enemyLvl').textContent = `Ур. ${enemy.lvl} • ATK ${enemy.atk} • DEF ${enemy.def}`;
+
+  updateHPBars();
+  renderFrame(0); // initial draw
+}
+
+/* ---------- drawing ---------- */
+function clear() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+}
+function drawBackground() {
+  // stylized background (gradient + field)
+  const g = ctx.createLinearGradient(0,0,0,canvas.height);
+  g.addColorStop(0,'#9fd8ff'); g.addColorStop(1,'#5fb6ff');
+  ctx.fillStyle = g; ctx.fillRect(0,0,canvas.width,canvas.height);
+  // field
+  ctx.fillStyle = '#2ea24a';
+  ctx.fillRect(0, canvas.height * 0.48, canvas.width, canvas.height * 0.5);
+  // river
+  ctx.fillStyle = '#39a6ff';
+  ctx.fillRect(canvas.width*0.38, canvas.height*0.53, canvas.width*0.24, canvas.height*0.08);
+}
+
+function drawCombatant(combatant, x, y, scale=1, flip=false) {
+  const w = layout.spriteW * scale;
+  const h = layout.spriteH * scale;
+  if (combatant.sprite.complete) {
+    ctx.save();
+    if (flip) { ctx.translate(x + w/2, 0); ctx.scale(-1,1); ctx.translate(-(x + w/2), 0); }
+    ctx.drawImage(combatant.sprite, x - w/2, y - h, w, h);
+    ctx.restore();
+  } else {
+    // placeholder box
+    ctx.fillStyle = '#0b1220';
+    ctx.fillRect(x - w/2, y - h, w, h);
+  }
+}
+
+/* render one frame with optional positions */
+function renderFrame(progress) {
+  clear();
+  drawBackground();
+
+  // draw lower decorations: towers
+  ctx.fillStyle = '#6b4c2b';
+  ctx.fillRect(40, canvas.height*0.28, 60, 80);
+  ctx.fillRect(canvas.width - 100, canvas.height*0.28, 60, 80);
+
+  // get current offsets from animation state
+  const state = window.__battle_state || {};
+  const pX = state.playerX ?? layout.leftX;
+  const eX = state.enemyX ?? layout.rightX;
+  const pScale = state.playerScale ?? 1;
+  const eScale = state.enemyScale ?? 1;
+
+  drawCombatant(player, pX, layout.yBase, pScale, false);
+  drawCombatant(enemy, eX, layout.yBase, eScale, true);
+}
+
+/* ---------- HP / HUD updates ---------- */
+function updateHPBars() {
+  const pFill = document.getElementById('playerHPFill');
+  const eFill = document.getElementById('enemyHPFill');
+  const pPct = Math.max(0, (player.hp / player.hpMax) * 100);
+  const ePct = Math.max(0, (enemy.hp / enemy.hpMax) * 100);
+  pFill.style.width = pPct + '%';
+  eFill.style.width = ePct + '%';
+  document.getElementById('playerXP').textContent = `XP: ${player.xp || 0}`;
+  document.getElementById('enemyXP').textContent = `XP: ${enemy.xp || 0}`;
+}
+
+/* ---------- small floating damage text ---------- */
+function showDamage(x, y, text, color='#ffdf57') {
+  const el = document.createElement('div');
+  el.className = 'damage-float';
+  el.style.left = (x) + 'px';
+  el.style.top = (y) + 'px';
+  el.textContent = text;
+  el.style.color = color;
+  document.body.appendChild(el);
+  // animate up & fade
+  const dur = 900;
+  el.animate([
+    { transform:'translateY(0)', opacity:1 },
+    { transform:'translateY(-40px)', opacity:0 }
+  ], { duration: dur, easing:'cubic-bezier(.2,.8,.2,1)' });
+  setTimeout(()=> el.remove(), dur);
+}
+
+/* ---------- Turn-based sequence animation ---------- */
+function computeDamage(attacker, defender) {
+  // simple formula: base = atk - def*0.5, min 1, plus randomness
+  const base = Math.max(1, Math.round(attacker.atk - defender.def * 0.4));
+  const variance = Math.round(base * 0.4);
+  const dmg = Math.max(1, base + (Math.floor(Math.random() * (variance*2+1)) - variance));
+  return dmg;
+}
+
+function animateMove(fromX, toX, duration = 320) {
+  return new Promise(resolve => {
+    const start = performance.now();
+    const orig = fromX;
+    function step(now){
+      const t = Math.min(1, (now - start) / duration);
+      const ease = (--t)*t*t+1; // easeOutCubic
+      const cur = orig + (toX - orig) * ease;
+      window.__battle_state = window.__battle_state || {};
+      if (fromX < toX) window.__battle_state.playerX = cur;
+      else window.__battle_state.enemyX = cur;
+      renderFrame();
+      if (now - start < duration) requestAnimationFrame(step);
+      else { resolve(); }
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+function animateScale(side, fromS, toS, duration=220) {
+  return new Promise(resolve => {
+    const start = performance.now();
+    function step(now){
+      const t = Math.min(1, (now - start) / duration);
+      const val = fromS + (toS - fromS) * (1 - Math.pow(1 - t, 3));
+      window.__battle_state = window.__battle_state || {};
+      if (side === 'player') window.__battle_state.playerScale = val;
+      else window.__battle_state.enemyScale = val;
+      renderFrame();
+      if (now - start < duration) requestAnimationFrame(step);
+      else resolve();
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+function smallShake(duration=220) {
+  return new Promise(resolve => {
+    const start = performance.now();
+    function step(now){
+      const t = (now - start);
+      const shake = Math.sin(t / 30) * 6 * (1 - t/(duration+20));
+      canvas.style.transform = `translateX(${shake}px)`;
+      if (t < duration) requestAnimationFrame(step);
+      else { canvas.style.transform = ''; resolve(); }
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+async function performAttack(attacker, defender, attackerPosX, defenderPosX, attackerIsPlayer=true) {
+  const approachX = attackerIsPlayer ? defenderPosX - 120 : defenderPosX + 120;
+  const retreatX = attackerPosX;
+  // move forward
+  window.__battle_state = window.__battle_state || {};
+  if (attackerIsPlayer) {
+    await animateMove(window.__battle_state.playerX ?? attackerPosX, approachX, 280);
+    await animateScale('player', 1, 1.08, 140);
+  } else {
+    await animateMove(window.__battle_state.enemyX ?? attackerPosX, approachX, 280);
+    await animateScale('enemy', 1, 1.08, 140);
+  }
+  // compute damage
+  const dmg = computeDamage(attacker, defender);
+  defender.hp = Math.max(0, defender.hp - dmg);
+  updateHPBars();
+
+  // show floating dmg near defender
+  const screenX = attackerIsPlayer ? (defenderPosX - 40) : (defenderPosX + 40);
+  const screenY = layout.yBase - layout.spriteH + 40;
+  showDamage(screenX, screenY, `-${dmg}`, '#ff6b6b');
+
+  // light shake
+  await smallShake(260);
+
+  // retreat
+  if (attackerIsPlayer) {
+    await animateMove(window.__battle_state.playerX ?? approachX, retreatX, 220);
+    await animateScale('player', 1.08, 1, 140);
+  } else {
+    await animateMove(window.__battle_state.enemyX ?? approachX, retreatX, 220);
+    await animateScale('enemy', 1.08, 1, 140);
+  }
+
+  // slight pause
+  await new Promise(r => setTimeout(r, 180));
+}
+
+async function runFightRound() {
+  const pStartX = layout.leftX; const eStartX = layout.rightX;
+  window.__battle_state = { playerX: pStartX, enemyX: eStartX, playerScale:1, enemyScale:1 };
+  renderFrame();
+
+  // simple alternating until one HP <= 0
+  let attackerIsPlayer = (Math.random() < 0.5); // who starts randomly
+  document.getElementById('turnIndicator').textContent = (attackerIsPlayer ? 'Ход: Ты' : 'Ход: Противник');
+
+  while (player.hp > 0 && enemy.hp > 0) {
+    document.getElementById('turnIndicator').textContent = (attackerIsPlayer ? 'Ход: Ты' : 'Ход: Противник');
+    if (attackerIsPlayer) {
+      await performAttack(player, enemy, window.__battle_state.playerX, window.__battle_state.enemyX, true);
+    } else {
+      await performAttack(enemy, player, window.__battle_state.enemyX, window.__battle_state.playerX, false);
+    }
+    updateHPBars();
+    if (player.hp <= 0 || enemy.hp <= 0) break;
+    attackerIsPlayer = !attackerIsPlayer;
+  }
+
+  // determine result
+  if (player.hp > 0 && enemy.hp <= 0) {
+    // player wins
+    // add XP/gold
+    const xpGained = 10 + Math.round(Math.random()*10);
+    player.xp = (player.xp || 0) + xpGained;
+    changeGold(50);
+    showResult(true, `Победа! +50 золота • +${xpGained} XP`);
+    // save xp to profile hero
+    persistHeroXP(player.id, player.xp);
+  } else {
+    // player lost
+    const xpGained = Math.round(Math.random()*4);
+    player.xp = (player.xp || 0) + xpGained;
+    changeGold(-20);
+    showResult(false, `Поражение... −20 золота • +${xpGained} XP`);
+    persistHeroXP(player.id, player.xp);
+  }
+  updateUITop();
+}
+
+/* ---------- Save XP back to profile hero ---------- */
+function persistHeroXP(heroId, xp) {
+  const p = loadProfile();
+  if (!p.heroes) p.heroes = [];
+  const h = p.heroes.find(x => x.id === heroId);
+  if (h) { h.xp = xp; saveProfile(p); }
+  else {
+    // if not found, optionally push new hero record
+    p.heroes.push({ id: heroId, name: player.name, xp });
+    saveProfile(p);
+  }
+}
+
+/* ---------- modal ---------- */
+function showResult(win, text) {
+  document.getElementById('resultTitle').textContent = win ? '🏆 Победа!' : '💥 Поражение';
+  document.getElementById('resultBody').textContent = text;
+  const modal = document.getElementById('resultModal');
+  modal.classList.remove('hidden'); modal.classList.add('show');
+  const box = modal.querySelector('.modal-card');
+  box.classList.toggle('win', win); box.classList.toggle('lose', !win);
+}
+
+document.getElementById('resultOk').addEventListener('click', ()=>{
+  const modal = document.getElementById('resultModal'); modal.classList.remove('show'); modal.classList.add('hidden');
+  // reload (go to main)
+  window.location.href = 'index.html';
+});
+document.getElementById('resultRetry').addEventListener('click', ()=>{
+  const modal = document.getElementById('resultModal'); modal.classList.remove('show'); modal.classList.add('hidden');
+  initBattle();
+});
+
+/* ---------- small helpers to update top UI and save profile ---------- */
+function updateUITop(){ // update gold, name if present
+  const p = loadProfile();
+  document.querySelectorAll('#playerName').forEach(el => el.textContent = p.name);
+  document.querySelectorAll('#gold').forEach(el => el.textContent = p.gold);
+  // also update hero panel if saved
+  // done in initBattle/persistHeroXP
+}
+
+function saveProfile(p){ localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); updateUITop(); }
+
+/* ---------- start/controls ---------- */
+document.getElementById('startFight').addEventListener('click', async ()=>{
+  if (isRunning) return;
+  isRunning = true;
+  initBattle();
+  await runFightRound();
+  isRunning = false;
+});
+
+document.getElementById('autoFight').addEventListener('click', async ()=>{
+  if (isRunning) return;
+  autoMode = true;
+  isRunning = true;
+  initBattle();
+  // run 3 fights sequentially
+  for (let i=0;i<3;i++){
+    if (!isRunning) break;
+    await runFightRound();
+    // tiny pause between fights
+    await new Promise(r => setTimeout(r, 700));
+  }
+  isRunning = false;
+  autoMode = false;
+});
+
+/* initialize visuals on load */
+document.addEventListener('DOMContentLoaded', () => {
+  // connect nav
+  attachNavButtons?.();
+  // initial UI
+  updateUITop();
+  // preview images may be set by user; ensure canvas initial draw
+  window.__battle_state = { playerX: layout.leftX, enemyX: layout.rightX, playerScale:1, enemyScale:1 };
+  renderFrame();
+});
   </script>
 </body>
 </html>
