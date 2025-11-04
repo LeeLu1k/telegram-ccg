@@ -1,309 +1,38 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>MiniBattle 3x3</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-  body { overflow:hidden; color:white; font-family:Inter, sans-serif; transition:background 1s ease; }
-  body.home { background: linear-gradient(-45deg,#0f2027,#203a43,#2c5364); background-size:400% 400%; animation:gradientMove 15s ease infinite; }
-  body.battle { background: linear-gradient(180deg,#87ceeb,#e0f7ff); }
-  @keyframes gradientMove { 0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%} }
-
-  .cloud { position:absolute; background:rgba(255,255,255,0.6); border-radius:50%; filter:blur(10px); animation:floatCloud 40s linear infinite; }
-  @keyframes floatCloud { from{transform:translateX(-200px)} to{transform:translateX(120vw)} }
-
-  .fade { opacity:0; transform:scale(.97); transition: opacity .45s ease, transform .45s ease; }
-  .fade.active { opacity:1; transform:scale(1); }
-
-  @keyframes attackPlayer { 0%{transform:translateX(0)}30%{transform:translateX(40px)}60%{transform:translateX(-10px)}100%{transform:translateX(0)} }
-  @keyframes attackBot { 0%{transform:translateX(0)}30%{transform:translateX(-40px)}60%{transform:translateX(10px)}100%{transform:translateX(0)} }
-
-  .damage-text { position:absolute; font-weight:700; font-size:1rem; color:#ff3b30; pointer-events:none; opacity:0; transform:translateY(0); animation:floatUp 900ms ease forwards; text-shadow:0 2px 8px rgba(0,0,0,.5); }
-  @keyframes floatUp { 0%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-36px)} }
-
-  .glass { background:rgba(255,255,255,.06); backdrop-filter: blur(8px); border:1px solid rgba(255,255,255,.08); box-shadow:0 8px 30px rgba(0,0,0,.35); }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MiniBattle 3x3</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="img/skins/spikly.png" />
 </head>
-<body class="home flex flex-col min-h-screen">
+<body class="home text-white flex flex-col min-h-screen bg-gradient-to-br from-[#0f2027] to-[#2c5364]">
 
-  <!-- HEADER -->
   <header class="glass flex items-center justify-between p-3 border-b border-white/10">
     <div class="flex items-center gap-2">
       <img id="user-photo" class="w-9 h-9 rounded-full border-2 border-cyan-400" />
       <span id="user-name" class="text-sm font-semibold"></span>
     </div>
     <div class="flex items-center gap-1 text-sm text-gray-200">
-      <img src="https://cdn-icons-png.flaticon.com/512/825/825540.png" class="w-4 h-4">
-      <span id="user-balance" class="font-semibold">0</span>
+      💰 <span id="balance">0</span>
     </div>
   </header>
 
-  <!-- MAIN -->
-  <main id="app" class="flex-1 relative overflow-hidden">
-    <!-- HOME -->
-    <section id="screen-home" class="fade active absolute inset-0 flex flex-col items-center justify-start text-center p-4 pt-8">
-      <div class="glass p-4 rounded-2xl w-full max-w-sm">
-        <h1 class="text-2xl font-bold text-cyan-400 mb-4">👤 Твой герой</h1>
-  
-        <div class="relative mb-4">
-          <!-- Фото ранга -->
-          <img id="rank-img" src="img/ranks/bronze.png" class="mx-auto w-20 h-20 object-contain" />
-          <!-- Цифра уровня -->
-          <span id="rank-level" class="absolute inset-0 flex items-center justify-center text-white text-2xl font-bold drop-shadow-lg"></span>
-        </div>
-  
-        <!-- Прогресс -->
-        <div class="w-full bg-gray-700/40 rounded-full h-3 mb-2 overflow-hidden">
-          <div id="exp-bar" class="bg-gradient-to-r from-cyan-400 to-blue-500 h-3 rounded-full transition-all duration-500"></div>
-        </div>
-        <p id="exp-text" class="text-sm text-gray-300 mb-3"></p>
-  
-        <!-- Фото героя -->
-        <img id="hero-img" src="img/skins/spikly.png" class="mx-auto w-24 h-24 mb-3 rounded-full border-2 border-cyan-400" />
-        <p id="hero-info" class="text-gray-300 mb-4">HP: — • Урон: — • Щит: —</p>
-  
-        <button id="toBattle" class="bg-gradient-to-r from-cyan-500 to-blue-500 py-3 px-10 rounded-xl font-semibold shadow-lg">⚔️ В бой</button>
-      </div>
-    </section>
-  
-    <!-- BATTLE (оставляем прежний) -->
-    <section id="screen-battle" class="fade absolute inset-0 flex flex-col items-center justify-center text-center hidden p-6">
-      <div class="cloud w-32 h-20 top-20 left-[-150px]" style="animation-delay:0s"></div>
-      <div class="cloud w-40 h-24 top-40 left-[-200px]" style="animation-delay:10s"></div>
-      <div class="cloud w-28 h-18 top-60 left-[-250px]" style="animation-delay:20s"></div>
-  
-      <h2 class="text-2xl text-blue-700 font-bold mb-4 drop-shadow-lg">☁️ Небесная Арена</h2>
-      <div id="countdown" class="text-3xl font-bold text-gray-800 mb-4"></div>
-  
-      <div id="battle-area" class="hidden w-full max-w-md flex justify-between items-center px-6 relative">
-        <div id="player" class="glass p-4 rounded-xl w-[45%] relative">
-          <img id="player-img" src="img/skins/spikly.png" class="w-20 h-20 rounded-full border-2 border-cyan-400 mx-auto mb-2" />
-          <p id="player-hp" class="text-gray-900">❤️ 0</p>
-        </div>
-        <div id="bot" class="glass p-4 rounded-xl w-[45%] relative">
-          <img id="bot-img" src="img/skins/bullit.png" class="w-20 h-20 rounded-full border-2 border-rose-400 mx-auto mb-2" />
-          <p id="bot-hp" class="text-gray-900">❤️ 0</p>
-        </div>
-      </div>
-  
-      <p id="battle-log" class="text-gray-900 mt-6 text-sm min-h-[1.6rem]"></p>
-    </section>
-    
-    <!-- СКИН -->
-    <section id="screen-skins" class="hidden p-4 text-center">
-      <h2 class="text-xl font-bold text-cyan-400 mb-4">🎭 Выбор скина</h2>
-      <div id="skins-list" class="grid grid-cols-2 gap-3"></div>
-    </section>
-    
-    <!-- Магазин -->
-    <section id="screen-shop" class="hidden p-4 text-center">
-      <h2 class="text-xl font-bold text-cyan-400 mb-4">🛒 Магазин</h2>
-      <div id="shop-list" class="grid grid-cols-2 gap-3"></div>
-    </section>
+  <main id="app" class="flex-1 overflow-hidden relative">
+    <section id="screen-home" class="p-4 text-center"></section>
+    <section id="screen-battle" class="hidden p-4 text-center"></section>
+    <section id="screen-skins" class="hidden p-4 text-center"></section>
+    <section id="screen-shop" class="hidden p-4 text-center"></section>
   </main>
 
-  <!-- NAV -->
   <nav class="flex justify-around text-sm py-2 border-t border-white/10 bg-black/40 backdrop-blur-lg">
     <button id="btn-home">🏠 Дом</button>
     <button id="btn-skins">🎭 Скины</button>
     <button id="btn-shop">🛒 Магазин</button>
   </nav>
 
-<script type="module">
-import { cards, getOwnedSkins } from './js/skins.js';
-import { initUser } from './js/utils.js';
-initUser();
-
-const screenHome = document.getElementById('screen-home');
-const screenBattle = document.getElementById('screen-battle');
-const body = document.body;
-const countdownEl = document.getElementById('countdown');
-const battleArea = document.getElementById('battle-area');
-const battleLog = document.getElementById('battle-log');
-const rankImg = document.getElementById('rank-img');
-const rankLevel = document.getElementById('rank-level');
-const expBar = document.getElementById('exp-bar');
-const expText = document.getElementById('exp-text');
-const balanceEl = document.createElement('span');
-balanceEl.className = "ml-auto text-sm text-yellow-300 font-semibold";
-document.querySelector('header').appendChild(balanceEl);
-
-// --- функции сохранения ---
-function loadPlayerData() {
-  const stored = JSON.parse(localStorage.getItem("playerData") || "{}");
-  return {
-    level: stored.level || 1,
-    exp: stored.exp || 0,
-    balance: stored.balance || 0
-  };
-}
-function savePlayerData(data) {
-  localStorage.setItem("playerData", JSON.stringify(data));
-}
-let playerData = loadPlayerData();
-
-// ранги по уровню
-function getRankImage(level) {
-  if (level <= 10) return "img/ranks/bronze.png";
-  if (level <= 20) return "img/ranks/silver.png";
-  if (level <= 30) return "img/ranks/gold.png";
-  if (level <= 40) return "img/ranks/plat.png";
-  return "img/ranks/diamond.png";
-}
-
-// обновление UI
-function updatePlayerUI() {
-  rankImg.src = getRankImage(playerData.level);
-  rankLevel.textContent = playerData.level;
-  balanceEl.textContent = `💰 ${playerData.balance}`;
-  const nextLevelExp = playerData.level * 100;
-  expText.textContent = `⭐ ${playerData.exp} / ${nextLevelExp}`;
-  expBar.style.width = Math.min(100, (playerData.exp / nextLevelExp) * 100) + "%";
-}
-updatePlayerUI();
-
-// герой
-const hero = (getOwnedSkins()[0] || cards[0]);
-document.getElementById('hero-img').src = hero.image;
-document.getElementById('hero-info').textContent = `${hero.type} • HP: ${hero.hp} • Урон: ${hero.attack} • Щит: ${hero.defense}`;
-
-// бой (как раньше)
-function makeNewStats() {
-  return {
-    player: { hp: hero.hp, dmg: hero.attack, def: hero.defense },
-    bot: { hp: 450, dmg: 150, def: 60 }
-  };
-}
-let state = makeNewStats();
-
-function setHPDisplays() {
-  document.getElementById('player-hp').textContent = `❤️ ${Math.max(0, Math.floor(state.player.hp))}`;
-  document.getElementById('bot-hp').textContent = `❤️ ${Math.max(0, Math.floor(state.bot.hp))}`;
-}
-
-function showDamage(containerEl, dmg) {
-  const dmgEl = document.createElement('div');
-  dmgEl.className = 'damage-text';
-  dmgEl.textContent = `-${dmg}`;
-  dmgEl.style.left = '50%';
-  dmgEl.style.transform = 'translateX(-50%)';
-  dmgEl.style.top = '8px';
-  containerEl.appendChild(dmgEl);
-  setTimeout(()=> dmgEl.remove(), 950);
-}
-
-function clearBattleVisuals() {
-  battleLog.textContent = '';
-  document.querySelectorAll('.damage-text').forEach(n => n.remove());
-  document.getElementById('player').style.animation = '';
-  document.getElementById('bot').style.animation = '';
-}
-
-document.getElementById('toBattle').onclick = async () => {
-  state = makeNewStats();
-  clearBattleVisuals();
-  showScreen('screen-battle');
-  body.classList.remove('home');
-  body.classList.add('battle');
-  setHPDisplays();
-  battleArea.classList.add('hidden');
-  for (let i = 5; i >= 0; i--) {
-    countdownEl.textContent = i === 0 ? 'Старт!' : `Старт через ${i}...`;
-    await new Promise(r => setTimeout(r, 1000));
-  }
-  countdownEl.textContent = '';
-  battleArea.classList.remove('hidden');
-  startAutoBattle();
-};
-
-function showScreen(id) {
-  const screens = ['screen-home','screen-battle'];
-  screens.forEach(sid => {
-    const el = document.getElementById(sid);
-    if (sid === id) {
-      el.classList.remove('hidden');
-      setTimeout(()=> el.classList.add('active'), 20);
-    } else {
-      el.classList.remove('active');
-      setTimeout(()=> el.classList.add('hidden'), 250);
-    }
-  });
-}
-
-// бой
-async function startAutoBattle() {
-  const playerEl = document.getElementById('player');
-  const botEl = document.getElementById('bot');
-  document.getElementById('player-img').src = hero.image;
-  document.getElementById('bot-img').src = cards[1]?.image || 'img/skins/bullit.png';
-
-  setHPDisplays();
-  let turn = 0;
-
-  while (state.player.hp > 0 && state.bot.hp > 0) {
-    await new Promise(r => setTimeout(r, 700));
-    if (turn % 2 === 0) {
-      playerEl.style.animation = "attackPlayer 600ms ease";
-      const dmg = Math.max(1, Math.round(state.player.dmg - state.bot.def));
-      state.bot.hp = Math.max(0, state.bot.hp - dmg);
-      showDamage(botEl, dmg);
-      setHPDisplays();
-      battleLog.textContent = `Ты нанёс ${dmg} урона`;
-    } else {
-      botEl.style.animation = "attackBot 600ms ease";
-      const dmg = Math.max(1, Math.round(state.bot.dmg - state.player.def));
-      state.player.hp = Math.max(0, state.player.hp - dmg);
-      showDamage(playerEl, dmg);
-      setHPDisplays();
-      battleLog.textContent = `Бот нанёс ${dmg} урона`;
-    }
-
-    await new Promise(r => setTimeout(r, 650));
-    playerEl.style.animation = '';
-    botEl.style.animation = '';
-
-    if (state.bot.hp <= 0 || state.player.hp <= 0) break;
-    turn++;
-  }
-
-  setHPDisplays();
-  const victory = state.bot.hp <= 0 && state.player.hp > 0;
-  battleLog.textContent = victory ? "🏆 Победа!" : "💀 Поражение!";
-
-  if (victory) {
-    const coins = Math.floor(Math.random() * 10) + 1;
-    const xp = Math.floor(Math.random() * 10) + 1;
-    playerData.balance += coins;
-    playerData.exp += xp;
-    const nextLevelExp = playerData.level * 100;
-    if (playerData.exp >= nextLevelExp) {
-      playerData.exp -= nextLevelExp;
-      playerData.level++;
-      battleLog.textContent += `\n✨ Новый уровень: ${playerData.level}!`;
-    }
-    savePlayerData(playerData);
-    updatePlayerUI();
-
-    const rewardMsg = document.createElement('div');
-    rewardMsg.className = "absolute bottom-10 bg-white/90 text-black px-4 py-2 rounded-xl shadow font-semibold";
-    rewardMsg.textContent = `+${coins} 💰  +${xp}⭐ опыта`;
-    document.body.appendChild(rewardMsg);
-    setTimeout(()=> rewardMsg.remove(), 2000);
-  }
-
-  await new Promise(r => setTimeout(r, 2000));
-  clearBattleVisuals();
-  await new Promise(r => setTimeout(r, 600));
-
-  showScreen('screen-home');
-  body.classList.remove('battle');
-  body.classList.add('home');
-  state = makeNewStats();
-  setHPDisplays();
-  setTimeout(()=> { battleLog.textContent = ''; countdownEl.textContent = ''; }, 200);
-}
-</script>
-<script type="module" src="./js/app.js"></script>
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
