@@ -15,16 +15,18 @@
       transition: background 1s ease;
     }
 
-    /* Градиент — меняется при переходе на бой */
+    /* Главный фон */
     body.home {
       background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364);
       background-size: 400% 400%;
       animation: gradientMove 15s ease infinite;
     }
 
+    /* Фон боя (небо) */
     body.battle {
       background: linear-gradient(180deg, #87ceeb, #e0f7ff);
       overflow: hidden;
+      transition: background 1.2s ease;
     }
 
     @keyframes gradientMove {
@@ -33,7 +35,7 @@
       100% { background-position: 0% 50%; }
     }
 
-    /* Анимированные облака */
+    /* Облака */
     .cloud {
       position: absolute;
       background: rgba(255, 255, 255, 0.6);
@@ -46,7 +48,7 @@
       to { transform: translateX(120vw); }
     }
 
-    /* Эффект плавного появления */
+    /* Плавное появление / исчезновение экранов */
     .fade {
       opacity: 0;
       transform: scale(0.97);
@@ -55,6 +57,36 @@
     .fade.active {
       opacity: 1;
       transform: scale(1);
+    }
+
+    /* Атака игрока */
+    @keyframes attackPlayer {
+      0% { transform: translateX(0); }
+      30% { transform: translateX(40px); }
+      60% { transform: translateX(-10px); }
+      100% { transform: translateX(0); }
+    }
+    /* Атака бота */
+    @keyframes attackBot {
+      0% { transform: translateX(0); }
+      30% { transform: translateX(-40px); }
+      60% { transform: translateX(10px); }
+      100% { transform: translateX(0); }
+    }
+
+    .damage-text {
+      position: absolute;
+      font-weight: bold;
+      font-size: 1rem;
+      color: #ff4444;
+      opacity: 0;
+      transform: translateY(0);
+      animation: floatUp 1s ease forwards;
+    }
+
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-40px); }
     }
   </style>
 </head>
@@ -67,14 +99,13 @@
     <span id="user-name" class="text-lg font-semibold"></span>
   </header>
 
-  <!-- MAIN CONTAINER -->
   <main id="app" class="flex-1 relative overflow-hidden">
     <!-- Главная -->
     <section id="screen-home" class="fade active absolute inset-0 flex flex-col items-center justify-center text-center">
       <div class="glass p-6 rounded-2xl w-full max-w-sm">
         <h1 class="text-3xl font-bold text-cyan-400 mb-3">Твой герой</h1>
         <img id="hero-img" src="img/skins/spikly.png" class="mx-auto w-24 h-24 mb-3 rounded-full border-2 border-cyan-400">
-        <p id="hero-info" class="text-gray-300 mb-4">🧙‍♂️ Новичок<br>HP: 120 • Урон: 25 • Щит: 10</p>
+        <p id="hero-info" class="text-gray-300 mb-4">🧙‍♂️ Новичок<br>HP: 1200 • Урон: 180 • Щит: 40</p>
         <button id="toBattle"
           class="bg-gradient-to-r from-cyan-500 to-blue-500 py-3 px-10 rounded-xl font-semibold hover:from-blue-400 hover:to-cyan-400">
           ⚔️ В бой
@@ -88,27 +119,21 @@
       <div class="cloud w-40 h-24 top-40 left-[-200px]" style="animation-delay:10s"></div>
       <div class="cloud w-28 h-18 top-60 left-[-250px]" style="animation-delay:20s"></div>
 
-      <h2 class="text-2xl text-blue-700 font-bold mb-4 drop-shadow-lg">🌤️ Небесная Арена</h2>
+      <h2 class="text-2xl text-blue-700 font-bold mb-4 drop-shadow-lg">☁️ Небесная Арена</h2>
       <div id="countdown" class="text-3xl font-bold text-gray-800 mb-4"></div>
 
-      <div id="battle-area" class="hidden w-full max-w-md flex justify-between items-center px-6">
-        <div class="glass p-4 rounded-xl w-[45%]">
+      <div id="battle-area" class="hidden w-full max-w-md flex justify-between items-center px-6 relative">
+        <div id="player" class="glass p-4 rounded-xl w-[45%] relative">
           <img src="img/skins/spikly.png" class="w-20 h-20 rounded-full border-2 border-cyan-400 mx-auto mb-2">
           <p id="player-hp" class="text-gray-900">❤️ 1200</p>
         </div>
-        <div class="glass p-4 rounded-xl w-[45%]">
+        <div id="bot" class="glass p-4 rounded-xl w-[45%] relative">
           <img src="img/skins/bullit.png" class="w-20 h-20 rounded-full border-2 border-rose-400 mx-auto mb-2">
           <p id="bot-hp" class="text-gray-900">❤️ 1000</p>
         </div>
       </div>
 
-      <button id="attackBtn"
-        class="hidden mt-8 bg-gradient-to-r from-pink-500 to-rose-500 py-3 px-10 rounded-xl font-semibold text-white hover:from-rose-400 hover:to-pink-400">
-        🗡️ Атаковать
-      </button>
-
-      <p id="battle-log" class="text-gray-900 mt-4 text-sm"></p>
-      <button id="backBtn" class="hidden mt-8 text-gray-800 underline">🏠 Назад</button>
+      <p id="battle-log" class="text-gray-900 mt-6 text-sm"></p>
     </section>
   </main>
 
@@ -118,17 +143,13 @@
     initUser();
 
     const hero = cards[0];
-    document.querySelector('#hero-img').src = hero.image;
-    document.querySelector('#hero-info').textContent = `${hero.type} • HP: ${hero.hp} • Атака: ${hero.attack}`;
-
     const screenHome = document.getElementById('screen-home');
     const screenBattle = document.getElementById('screen-battle');
     const countdownEl = document.getElementById('countdown');
-    const app = document.getElementById('app');
     const body = document.body;
 
     document.getElementById('toBattle').onclick = async () => {
-      // плавный переход
+      // Переход
       screenHome.classList.remove('active');
       screenHome.classList.add('hidden');
       screenBattle.classList.remove('hidden');
@@ -136,55 +157,81 @@
       body.classList.remove('home');
       body.classList.add('battle');
 
-      // отсчёт
+      // Отсчёт перед боем
       for (let i = 5; i >= 0; i--) {
-        countdownEl.textContent = `Бой начнётся через ${i}...`;
+        countdownEl.textContent = `Старт через ${i}...`;
         await new Promise(r => setTimeout(r, 1000));
       }
       countdownEl.textContent = '';
       startBattle();
     };
 
-    function startBattle() {
+    async function startBattle() {
       const battleArea = document.getElementById('battle-area');
-      const attackBtn = document.getElementById('attackBtn');
       const log = document.getElementById('battle-log');
-      const backBtn = document.getElementById('backBtn');
       battleArea.classList.remove('hidden');
-      attackBtn.classList.remove('hidden');
 
-      let player = { hp: hero.hp, dmg: hero.attack, def: 40 };
+      let player = { hp: hero.hp, dmg: hero.attack, def: hero.defense };
       let bot = { hp: 1000, dmg: 150, def: 60 };
 
-      attackBtn.onclick = () => {
-        const dmgToBot = Math.max(1, player.dmg - bot.def);
-        bot.hp -= dmgToBot;
-        document.getElementById("bot-hp").textContent = `❤️ ${bot.hp}`;
-        if (bot.hp <= 0) return endBattle(true);
+      const playerEl = document.getElementById('player');
+      const botEl = document.getElementById('bot');
 
-        const dmgToPlayer = Math.max(1, bot.dmg - player.def);
-        player.hp -= dmgToPlayer;
-        document.getElementById("player-hp").textContent = `❤️ ${player.hp}`;
-        if (player.hp <= 0) return endBattle(false);
+      let turn = 0;
 
-        log.textContent = `Ты нанёс ${dmgToBot}, бот ответил ${dmgToPlayer}`;
-      };
+      while (player.hp > 0 && bot.hp > 0) {
+        await new Promise(r => setTimeout(r, 800));
 
-      function endBattle(win) {
-        attackBtn.disabled = true;
-        log.textContent = win ? "🏆 Победа!" : "💀 Поражение!";
-        backBtn.classList.remove('hidden');
-        backBtn.onclick = () => {
-          screenBattle.classList.remove('active');
-          setTimeout(() => {
-            screenBattle.classList.add('hidden');
-            screenHome.classList.remove('hidden');
-            setTimeout(() => screenHome.classList.add('active'), 50);
-            body.classList.remove('battle');
-            body.classList.add('home');
-          }, 600);
-        };
+        if (turn % 2 === 0) {
+          // Игрок атакует
+          playerEl.style.animation = "attackPlayer 0.6s ease";
+          const dmg = Math.max(1, player.dmg - bot.def);
+          bot.hp -= dmg;
+          showDamage(botEl, dmg);
+          document.getElementById("bot-hp").textContent = `❤️ ${bot.hp}`;
+          log.textContent = `Ты нанёс ${dmg} урона!`;
+        } else {
+          // Бот атакует
+          botEl.style.animation = "attackBot 0.6s ease";
+          const dmg = Math.max(1, bot.dmg - player.def);
+          player.hp -= dmg;
+          showDamage(playerEl, dmg);
+          document.getElementById("player-hp").textContent = `❤️ ${player.hp}`;
+          log.textContent = `Бот нанёс ${dmg} урона!`;
+        }
+
+        await new Promise(r => setTimeout(r, 700));
+        playerEl.style.animation = "";
+        botEl.style.animation = "";
+
+        if (bot.hp <= 0 || player.hp <= 0) break;
+        turn++;
       }
+
+      // Итог боя
+      const win = bot.hp <= 0;
+      log.textContent = win ? "🏆 Победа!" : "💀 Поражение!";
+      await new Promise(r => setTimeout(r, 3000));
+
+      // Возврат на главную
+      screenBattle.classList.remove('active');
+      setTimeout(() => {
+        screenBattle.classList.add('hidden');
+        screenHome.classList.remove('hidden');
+        setTimeout(() => screenHome.classList.add('active'), 50);
+        body.classList.remove('battle');
+        body.classList.add('home');
+      }, 600);
+    }
+
+    function showDamage(targetEl, dmg) {
+      const dmgText = document.createElement('div');
+      dmgText.className = 'damage-text';
+      dmgText.textContent = `-${dmg}`;
+      dmgText.style.left = '50%';
+      dmgText.style.top = '10px';
+      targetEl.appendChild(dmgText);
+      setTimeout(() => dmgText.remove(), 1000);
     }
   </script>
 </body>
