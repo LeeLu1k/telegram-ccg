@@ -10,3 +10,7 @@ export function getUser() {
 export function saveUser(user) {
   localStorage.setItem('user', JSON.stringify(user));
 }
+export function getUser() {
+  const data = JSON.parse(localStorage.getItem("userData"));
+  return data || { balance: 0, level: 1, xp: 0, selectedSkin: 0 };
+}
