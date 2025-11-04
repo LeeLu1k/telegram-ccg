@@ -151,11 +151,20 @@
     // initial hp display
     setHPDisplays();
 
-    // countdown 5..0
-    for (let i=5;i>=0;i--) {
+    // сначала скрываем бой (чтобы не было видно при отсчёте)
+    battleArea.classList.add('hidden');
+    
+    // показываем только счётчик
+    for (let i = 5; i >= 0; i--) {
       countdownEl.textContent = i === 0 ? 'Старт!' : `Старт через ${i}...`;
       await new Promise(r => setTimeout(r, 1000));
     }
+    
+    // убираем счётчик и включаем арену
+    countdownEl.textContent = '';
+    battleArea.classList.remove('hidden');
+    startAutoBattle();
+
     countdownEl.textContent = '';
     startAutoBattle();
   };
