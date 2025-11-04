@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Карточная Арена — Бой</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="wrap">
+    <header class="topbar">
+      <div class="back"><button class="small-btn" data-href="index.html">◀ Назад</button></div>
+      <div class="player">👑 <span id="playerName">Игрок</span></div>
+      <div class="gold">💰 <span id="gold">100</span></div>
+    </header>
+
+    <main class="main-area">
+      <section class="arena-card large">
+        <canvas id="battleCanvas" width="200" height="120"></canvas>
+        <div class="battle-hud">
+          <div class="enemy">👾 Противник</div>
+          <div class="vs">VS</div>
+          <div class="you">🛡️ Ты</div>
+        </div>
+      </section>
+
+      <div class="battle-controls">
+        <button id="startFight" class="pixel-btn primary">▶ Начать бой</button>
+        <div class="hint">Нажми «Начать бой», чтобы сыграть. Победа +50 золота, поражение −20.</div>
+      </div>
+    </main>
+  </div>
+
+  <!-- result modal -->
+  <div id="resultModal" class="modal hidden">
+    <div class="modal-box">
+      <h3 id="resultTitle">Результат</h3>
+      <p id="resultText">...</p>
+      <div class="modal-actions">
+        <button id="modalOk" class="pixel-btn primary">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    drawArenaCanvas('battleCanvas');
+    attachNavButtons();
+
+    const startFight = document.getElementById('startFight');
+    const modal = document.getElementById('resultModal');
+    const resultTitle = document.getElementById('resultTitle');
+    const resultText = document.getElementById('resultText');
+    const modalOk = document.getElementById('modalOk');
+
+    startFight.addEventListener('click', () => {
+      // quick flash
+      flashCanvas('battleCanvas');
+      // simulate short delay
+      setTimeout(() => {
+        const winChance = 0.55;
+        const win = Math.random() < winChance;
+        if (win) {
+          updateGold(50);
+          showResult(true, '🏆 Победа! +50 золота');
+        } else {
+          updateGold(-20);
+          showResult(false, '💥 Поражение! -20 золота');
+        }
+      }, 700);
+    });
+
+    function showResult(win, text) {
+      modal.classList.remove('hidden');
+      modal.classList.add('show');
+      resultTitle.textContent = win ? 'Победа!' : 'Поражение';
+      resultText.textContent = text;
+      const box = modal.querySelector('.modal-box');
+      box.classList.toggle('win', win);
+      box.classList.toggle('lose', !win);
+    }
+    modalOk.addEventListener('click', () => {
+      modal.classList.remove('show');
+      modal.classList.add('hidden');
+    });
+  </script>
+</body>
+</html>
