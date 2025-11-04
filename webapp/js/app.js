@@ -36,32 +36,82 @@ homeScreen.innerHTML = `
 document.getElementById('startBattle').addEventListener('click', async () => {
   // экран боя
   homeScreen.innerHTML = `
-    <div class="flex flex-col items-center justify-center text-center mt-4">
-      <h2 class="text-2xl font-bold text-cyan-300 mb-2">⚔️ 1 на 1 Битва!</h2>
-      <div id="arena" class="relative flex justify-between w-full max-w-sm px-6 mt-6">
-        <div id="player" class="relative w-28 text-center">
+    <div class="relative flex flex-col items-center justify-center text-center h-full overflow-hidden">
+      <!-- фон и облака -->
+      <div class="absolute inset-0 bg-gradient-to-b from-sky-300 via-blue-300 to-blue-500 animate-skyMove"></div>
+      <div class="cloud w-32 h-20 top-10 left-[-150px]" style="animation-delay:0s"></div>
+      <div class="cloud w-40 h-24 top-40 left-[-200px]" style="animation-delay:10s"></div>
+      <div class="cloud w-28 h-18 top-60 left-[-250px]" style="animation-delay:20s"></div>
+
+      <h2 class="text-2xl font-bold text-white drop-shadow-lg mt-4 mb-4">☁️ Небесная Арена</h2>
+      <div id="countdown" class="text-4xl font-bold text-white mb-4"></div>
+
+      <div id="arena" class="relative flex justify-between w-full max-w-sm px-6">
+        <div id="player" class="relative w-28 text-center z-10">
           <img src="${selectedSkin.image}" class="w-24 h-24 rounded-full border-2 border-cyan-400 mx-auto transition-transform duration-300" />
-          <p id="playerHP" class="text-gray-200 text-sm mt-1">❤️ ${selectedSkin.hp}</p>
+          <p id="playerHP" class="text-white text-sm mt-1">❤️ ${selectedSkin.hp}</p>
         </div>
-        <div id="bot" class="relative w-28 text-center">
+        <div id="bot" class="relative w-28 text-center z-10">
           <img src="img/skins/bullit.png" class="w-24 h-24 rounded-full border-2 border-rose-400 mx-auto transition-transform duration-300" />
-          <p id="botHP" class="text-gray-200 text-sm mt-1">❤️ 1000</p>
+          <p id="botHP" class="text-white text-sm mt-1">❤️ 1000</p>
         </div>
       </div>
-      <p id="battleLog" class="text-gray-300 text-sm mt-6 h-5"></p>
+
+      <p id="battleLog" class="text-white text-sm mt-8 h-6"></p>
     </div>
   `;
+
+  // добавить стили облаков и фона
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes skyMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .animate-skyMove {
+      background-size: 400% 400%;
+      animation: skyMove 20s ease infinite;
+    }
+    .cloud {
+      position: absolute;
+      background: rgba(255,255,255,0.7);
+      border-radius: 50%;
+      filter: blur(10px);
+      animation: floatCloud 40s linear infinite;
+    }
+    @keyframes floatCloud {
+      from { transform: translateX(-200px); }
+      to { transform: translateX(120vw); }
+    }
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translate(-50%, 0); }
+      100% { opacity: 0; transform: translate(-50%, -40px); }
+    }
+    .animate-float {
+      animation: floatUp 0.9s ease forwards;
+    }
+  `;
+  document.head.appendChild(style);
 
   const playerEl = document.querySelector('#player img');
   const botEl = document.querySelector('#bot img');
   const playerHPEl = document.getElementById('playerHP');
   const botHPEl = document.getElementById('botHP');
   const log = document.getElementById('battleLog');
+  const countdownEl = document.getElementById('countdown');
 
-  // начальные характеристики
   let player = { hp: selectedSkin.hp, atk: selectedSkin.attack, def: 80 };
   let bot = { hp: 1000, atk: 150, def: 60 };
-  let turn = 0;
+
+  // ===== ОТСЧЁТ ПЕРЕД БОЕМ =====
+  for (let i = 3; i > 0; i--) {
+    countdownEl.textContent = i;
+    await new Promise(r => setTimeout(r, 1000));
+  }
+  countdownEl.textContent = '⚡ Старт!';
+  await new Promise(r => setTimeout(r, 800));
+  countdownEl.textContent = '';
 
   function updateHP() {
     playerHPEl.textContent = `❤️ ${Math.max(0, Math.floor(player.hp))}`;
@@ -79,34 +129,21 @@ document.getElementById('startBattle').addEventListener('click', async () => {
     setTimeout(() => dmgEl.remove(), 900);
   }
 
-  // добавить CSS анимацию
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes floatUp {
-      0% { opacity:1; transform:translate(-50%, 0); }
-      100% { opacity:0; transform:translate(-50%, -40px); }
-    }
-    .animate-float { animation: floatUp 0.9s ease forwards; }
-  `;
-  document.head.appendChild(style);
-
   async function doAttack(attacker, defender, atkEl, defEl, name) {
-    // движение вперёд
     atkEl.style.transform = 'translateX(' + (atkEl === playerEl ? '50px' : '-50px') + ')';
-    await new Promise(r => setTimeout(r, 200));
-    // урон
+    await new Promise(r => setTimeout(r, 250));
     const dmg = Math.max(1, Math.round(attacker.atk - defender.def / 3));
     defender.hp -= dmg;
     showDamage(defEl, dmg);
     updateHP();
     log.textContent = `${name} нанёс ${dmg} урона`;
-    await new Promise(r => setTimeout(r, 300));
-    // назад
+    await new Promise(r => setTimeout(r, 400));
     atkEl.style.transform = 'translateX(0)';
     await new Promise(r => setTimeout(r, 300));
   }
 
-  // бой по очереди
+  // ===== САМА БИТВА =====
+  let turn = 0;
   while (player.hp > 0 && bot.hp > 0) {
     if (turn % 2 === 0) {
       await doAttack(player, bot, playerEl, botEl, "Ты");
@@ -120,7 +157,7 @@ document.getElementById('startBattle').addEventListener('click', async () => {
   log.textContent = victory ? "🏆 Победа!" : "💀 Поражение!";
   updateHP();
 
-  // если победа — награда
+  // ===== НАГРАДА =====
   if (victory) {
     const bonusCoins = Math.floor(Math.random() * 10) + 1;
     const bonusLevel = Math.floor(Math.random() * 10) + 1;
@@ -131,13 +168,14 @@ document.getElementById('startBattle').addEventListener('click', async () => {
     log.innerHTML += `<br>💰 +${bonusCoins} • ⬆️ +${bonusLevel} ур.`;
   }
 
-  // вернуться домой
+  // ===== ВОЗВРАТ НА ГЛАВНУЮ =====
   setTimeout(() => {
     const btn = document.createElement('button');
     btn.textContent = '⬅️ На главную';
-    btn.className = 'mt-6 bg-cyan-500 px-6 py-2 rounded-xl text-white font-semibold';
+    btn.className = 'mt-6 bg-cyan-500 px-6 py-2 rounded-xl text-white font-semibold shadow-lg';
     btn.onclick = () => location.reload();
     homeScreen.appendChild(btn);
-  }, 2000);
+  }, 2500);
 });
+
 
