@@ -1,234 +1,153 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CCG — Pixel 2D UI</title>
-  <!-- Pixel font -->
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Карточная Арена</title>
   <style>
-    :root{
-      --bg:#0b1220;
-      --panel:#10202e;
-      --accent:#ffd166;
-      --muted:#9fb1c8;
-      --card-bg:#1b2b38;
-      --card-border:#0f1720;
-      --pixel-size:4px; /* visual "pixel" unit for borders */
-    }
-    /* Reset */
-    *{box-sizing:border-box}
-    html,body{height:100%;background:var(--bg);font-family:'Press Start 2P', monospace;color:var(--muted);margin:0}
-
-    /* Subtle tiled background to feel retro */
-    body{
-      background-image: linear-gradient(45deg, rgba(255,255,255,0.02) 1px, transparent 1px),
-                        linear-gradient(-45deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-      background-size: 24px 24px;
-      -webkit-font-smoothing: none;
-      text-rendering: optimizeLegibility;
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Lilita One', sans-serif;
+      background: linear-gradient(180deg, #3b83f6 0%, #1c4bbd 100%);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
     }
 
-    .app{
-      max-width:1100px;margin:24px auto;padding:18px;display:grid;grid-template-columns: 320px 1fr;gap:18px;align-items:start
+    .top-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 10px;
+      font-size: 14px;
+      animation: fadeInDown 1s ease forwards;
     }
 
-    /* Left panel */
-    .panel{
-      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));
-      border: calc(var(--pixel-size)) solid var(--card-border);
-      padding:12px;border-radius:6px;
-      box-shadow: 6px 6px 0 rgba(0,0,0,0.6);
-      min-height:300px;
+    .top-bar div {
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
 
-    .title{font-size:12px;color:var(--accent);margin-bottom:12px}
-    .player{font-size:10px;color:var(--muted);margin-bottom:10px}
-
-    /* Card list */
-    .card-list{display:flex;flex-direction:column;gap:12px}
-
-    /* Card look (pixel-style) */
-    .card{
-      display:flex;gap:10px;align-items:center;padding:8px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(0,0,0,0.05));
-      border: calc(var(--pixel-size)) solid var(--card-border);
-      border-radius:4px;position:relative;overflow:hidden;min-height:72px;
-      image-rendering: pixelated; /* ensure pixel images stay crisp */
+    .arena {
+      width: 90%;
+      height: 50%;
+      background: linear-gradient(180deg, #4caf50 0%, #2e7d32 100%);
+      border: 4px solid #fff;
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4) inset;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transform: scale(0.7);
+      opacity: 0;
+      animation: zoomIn 1s ease 0.5s forwards;
     }
-    .card .thumb{width:92px;height:64px;flex:0 0 92px;background:#000;border:4px solid #07121a}
-    .card .meta{flex:1}
-    .card .meta h3{margin:0;font-size:11px;color:#fff}
-    .card .meta p{margin:6px 0 0;font-size:9px;color:var(--muted)}
-    .stats{display:flex;gap:8px;margin-top:8px}
-    .stat{padding:4px 6px;background:rgba(255,255,255,0.02);border-radius:3px;font-size:9px}
 
-    /* Big board */
-    .board{
-      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.04));
-      border: calc(var(--pixel-size)) solid var(--card-border);
-      padding:16px;border-radius:6px;min-height:420px;box-shadow:6px 6px 0 rgba(0,0,0,0.55)
+    .arena::before, .arena::after {
+      content: '';
+      position: absolute;
+      width: 20%;
+      height: 30%;
+      background: #795548;
+      border: 3px solid #fff;
+      border-radius: 10px;
+      bottom: 10px;
     }
-    .board-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-    .board-title{font-size:12px;color:var(--accent)}
-    .controls{display:flex;gap:10px}
-
-    /* Pixel buttons */
-    .btn{
-      font-family:'Press Start 2P', monospace;font-size:10px;padding:10px 12px;border-radius:4px;border:4px solid var(--card-border);
-      background:linear-gradient(180deg, #203444, #15232b);color:var(--muted);cursor:pointer;user-select:none;image-rendering:pixelated
+    .arena::after {
+      top: 10px;
+      bottom: auto;
+      right: 10%;
     }
-    .btn.primary{background:linear-gradient(180deg,#ffd166,#ffb03b);color:#07202c}
-    .btn:active{transform:translateY(1px)}
 
-    /* Play area grid */
-    .play-area{display:grid;grid-template-columns:repeat(6, 1fr);gap:12px}
-    .slot{height:120px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.06));border:4px solid var(--card-border);display:flex;align-items:center;justify-content:center}
+    .bottom-menu {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      background: rgba(0,0,0,0.25);
+      padding: 10px 0;
+      border-top: 2px solid rgba(255,255,255,0.3);
+      animation: fadeInUp 1s ease 1s forwards;
+      opacity: 0;
+    }
 
-    /* Small responsive */
-    @media (max-width:900px){ .app{grid-template-columns:1fr; padding:12px} .panel{order:2} }
+    .menu-btn {
+      background: linear-gradient(180deg, #ffd54f 0%, #f9a825 100%);
+      border: 3px solid #fff;
+      border-radius: 12px;
+      color: #000;
+      font-size: 14px;
+      font-weight: bold;
+      padding: 8px 16px;
+      box-shadow: 0 4px #b9770e;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
 
-    /* Tiny outlines to emulate pixel art border by repeating shadow steps */
-    .pixel-border{
-      box-shadow: 4px 4px 0 rgba(0,0,0,0.6), -4px -4px 0 rgba(0,0,0,0.05);
+    .menu-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px #b9770e;
+    }
+
+    .menu-btn:active {
+      transform: translateY(2px) scale(0.97);
+      box-shadow: 0 2px #b9770e;
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes zoomIn {
+      from { transform: scale(0.7); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
     }
   </style>
+  <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="app">
-    <aside class="panel">
-      <div class="title">Моя карточная игра</div>
-      <div class="player" id="playerLine">Запуск вне Telegram — откройте в Telegram.</div>
+  <div class="top-bar">
+    <div>👑 <span id="playerName">Игрок</span></div>
+    <div>🏆 <span id="trophies">1200</span></div>
+    <div>💰 <span id="gold">500</span></div>
+  </div>
 
-      <div class="title">Твоя колода</div>
-      <div class="card-list" id="cardList">
-        <!-- cards rendered here -->
-      </div>
+  <div class="arena">
+    <h2>АРЕНА</h2>
+  </div>
 
-      <div style="margin-top:12px;display:flex;gap:8px">
-        <button class="btn" id="btnRandom">Сгенерировать карту</button>
-        <button class="btn primary" id="btnSave">Сохранить состояние</button>
-      </div>
-    </aside>
-
-    <main class="board">
-      <div class="board-header">
-        <div>
-          <div class="board-title">Поле боя</div>
-          <div style="font-size:9px;color:var(--muted)">Текущий режим: PvE (демо)</div>
-        </div>
-        <div class="controls">
-          <button class="btn" id="btnShuffle">Перетасовать</button>
-          <button class="btn" id="btnDraw">Взять карту</button>
-        </div>
-      </div>
-
-      <div class="play-area" id="playArea">
-        <!-- slots -->
-      </div>
-    </main>
+  <div class="bottom-menu">
+    <button class="menu-btn">⚔️ Бой</button>
+    <button class="menu-btn">🃏 Колода</button>
+    <button class="menu-btn">🏰 Клан</button>
+    <button class="menu-btn">💎 Магазин</button>
   </div>
 
   <script>
-    // Telegram detection
     const tg = window.Telegram?.WebApp;
-    const playerLine = document.getElementById('playerLine');
     if (tg) {
-      const user = tg.initDataUnsafe?.user;
-      playerLine.textContent = user ? `Привет, ${user.first_name}! Открой игру внутри Telegram.` : 'Откроено внутри Telegram.';
       tg.expand();
-    }
-
-    // Demo card data
-    const sampleCards = [
-      {id:1,name:'Пиксельный Воин',atk:3,def:2,rarity:'common',colors:['#ffd166','#ff6b6b','#6bffb0']},
-      {id:2,name:'Бомбардир',atk:5,def:1,rarity:'rare',colors:['#8ecae6','#ffd166','#6b46ff']},
-      {id:3,name:'Страж',atk:1,def:5,rarity:'uncommon',colors:['#bde0fe','#baffc9','#ffe066']}
-    ];
-
-    const cardList = document.getElementById('cardList');
-    const playArea = document.getElementById('playArea');
-
-    function makeCardDOM(card){
-      const el = document.createElement('div'); el.className='card pixel-border';
-      const thumb = document.createElement('canvas'); thumb.className='thumb'; thumb.width=92; thumb.height=64;
-      // draw pixel art scaled from small grid
-      drawPixelArt(thumb, card.colors);
-      const meta = document.createElement('div'); meta.className='meta';
-      meta.innerHTML = `<h3>${card.name}</h3><p>id:${card.id} • ${card.rarity}</p>`;
-      const stats = document.createElement('div'); stats.className='stats';
-      const s1 = document.createElement('div'); s1.className='stat'; s1.textContent='ATK '+card.atk;
-      const s2 = document.createElement('div'); s2.className='stat'; s2.textContent='DEF '+card.def;
-      stats.appendChild(s1); stats.appendChild(s2);
-      meta.appendChild(stats);
-      el.appendChild(thumb); el.appendChild(meta);
-      el.addEventListener('click',()=>{ alert(`${card.name}\nATK ${card.atk} / DEF ${card.def}`)});
-      return el;
-    }
-
-    function renderDeck(){
-      cardList.innerHTML='';
-      for(const c of sampleCards){ cardList.appendChild(makeCardDOM(c)); }
-    }
-
-    // Create play area slots
-    function initSlots(){
-      playArea.innerHTML='';
-      for(let i=0;i<6;i++){ const slot=document.createElement('div'); slot.className='slot'; slot.textContent='Пусто'; playArea.appendChild(slot); }
-    }
-
-    // draw pixel art onto canvas by painting a simple pattern using color palette
-    function drawPixelArt(canvas, palette){
-      // low-res grid
-      const gridW = 16, gridH = 12; // we'll scale to canvas size
-      const ctx = canvas.getContext('2d');
-      // create an offscreen tiny canvas
-      const off = document.createElement('canvas'); off.width=gridW; off.height=gridH;
-      const octx = off.getContext('2d');
-      // fill with first palette color
-      octx.fillStyle = palette[0] || '#222';
-      octx.fillRect(0,0,gridW,gridH);
-      // add simple pixel patterns
-      for(let y=2;y<gridH-2;y++){
-        for(let x=2;x<gridW-2;x++){
-          const r = Math.random();
-          if(r>0.88) octx.fillStyle = palette[1] || '#555';
-          else if(r>0.96) octx.fillStyle = palette[2] || '#999';
-          else continue;
-          octx.fillRect(x,y,1,1);
-        }
+      const user = tg.initDataUnsafe?.user;
+      if (user) {
+        document.getElementById('playerName').textContent = user.first_name;
       }
-      // scale offscreen to main canvas with imageSmoothing disabled
-      ctx.imageSmoothingEnabled = false;
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.drawImage(off,0,0,canvas.width,canvas.height);
+    } else {
+      document.querySelector('.arena').innerHTML = '<h3>Запуск возможен только внутри Telegram</h3>';
     }
-
-    // Buttons
-    document.getElementById('btnRandom').addEventListener('click',()=>{
-      const id = Math.floor(Math.random()*10000);
-      const card = {id, name:'Карта#'+id, atk:Math.ceil(Math.random()*6), def:Math.ceil(Math.random()*6), rarity:'common', colors:[randomColor(),randomColor(),randomColor()] };
-      sampleCards.push(card); renderDeck();
-    });
-
-    document.getElementById('btnSave').addEventListener('click', async ()=>{
-      const state = { deck: sampleCards };
-      if(tg){ tg.sendData(JSON.stringify({type:'save', state})); }
-      try{
-        await fetch('/api/save-state', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:tg?.initDataUnsafe?.user?.id||0, state})});
-        alert('Состояние сохранено.');
-      }catch(e){ console.warn('save failed',e); alert('Не удалось сохранить локально (fetch).'); }
-    });
-
-    document.getElementById('btnShuffle').addEventListener('click', ()=>{ shuffleArray(sampleCards); renderDeck(); });
-    document.getElementById('btnDraw').addEventListener('click', ()=>{ const c = sampleCards.shift(); if(c){ // place in first empty slot
-      const slots = document.querySelectorAll('.slot'); for(const s of slots){ if(s.textContent==='Пусто'){ s.textContent=''; const cn = makeCardDOM(c); cn.style.width='100%'; cn.querySelector('.thumb').style.width='60px'; cn.querySelector('.thumb').style.height='48px'; s.appendChild(cn); break; } }
-      renderDeck(); } else alert('Колода пуста'); });
-
-    function randomColor(){ return `#${Math.floor(Math.random()*16777215).toString(16).padStart(6,'0')}` }
-    function shuffleArray(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
-
-    // init
-    initSlots(); renderDeck();
   </script>
 </body>
 </html>
