@@ -174,13 +174,37 @@ async function startBattle() {
 
   if (victory) {
     const bonusCoins = Math.floor(Math.random() * 10) + 1;
-    const bonusLevel = Math.floor(Math.random() * 10) + 1;
+    const bonusXP = Math.floor(Math.random() * 70) + 30; // от 30 до 100 XP
+
     user.balance += bonusCoins;
-    user.level += bonusLevel;
+    user.xp = (user.xp || 0) + bonusXP;
+
+    // Проверяем повышение уровня
+    let xpNeeded = user.level * 200;
+    let levelUps = 0;
+    while (user.xp >= xpNeeded) {
+      user.xp -= xpNeeded;
+      user.level += 1;
+      levelUps++;
+      xpNeeded = user.level * 200;
+    }
+
     saveUser(user);
-    log.innerHTML += `<br>💰 +${bonusCoins} • ⬆️ +${bonusLevel} ур.`;
+
+    // показываем бонусы визуально
+    const bonusContainer = document.createElement('div');
+    bonusContainer.className = 'absolute inset-0 flex flex-col items-center justify-center pointer-events-none';
+    bonusContainer.innerHTML = `
+      <div class="bonus-float text-yellow-300 text-2xl font-bold drop-shadow-lg">💰 +${bonusCoins}</div>
+      <div class="bonus-float text-blue-300 text-xl font-semibold drop-shadow-lg delay-200">✨ +${bonusXP} XP</div>
+      ${levelUps > 0 ? `<div class="bonus-float text-lime-300 text-2xl font-bold drop-shadow-lg delay-400">⬆️ +${levelUps} LVL!</div>` : ''}
+    `;
+    homeScreen.appendChild(bonusContainer);
+
+    log.innerHTML += `<br>💰 +${bonusCoins} • ✨ +${bonusXP} XP${levelUps > 0 ? ` • ⬆️ +${levelUps} ур.` : ''}`;
   }
 
+  // ===== ВОЗВРАТ НА ГЛАВНУЮ =====
   setTimeout(() => {
     const btn = document.createElement('button');
     btn.textContent = '⬅️ На главную';
@@ -199,6 +223,18 @@ style.textContent = `
   .animate-pulse { animation: pulse 1.5s ease-in-out infinite; }
   @keyframes fadeIn { from { opacity:0; transform:scale(.9); } to { opacity:1; transform:scale(1); } }
   .animate-fadeIn { animation: fadeIn .5s ease; }
+  @keyframes bonusFloat {
+    0% { opacity: 0; transform: translateY(20px) scale(0.8); }
+    20% { opacity: 1; transform: translateY(0) scale(1); }
+    80% { opacity: 1; transform: translateY(-20px) scale(1.1); }
+    100% { opacity: 0; transform: translateY(-40px) scale(1.1); }
+  }
+  .bonus-float {
+    animation: bonusFloat 1.8s ease-out forwards;
+  }
+  .bonus-float.delay-200 {
+    animation-delay: 0.2s;
+  }
 `;
 document.head.appendChild(style);
 
