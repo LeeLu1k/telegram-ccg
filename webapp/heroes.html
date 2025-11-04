@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Карточная Арена — Мои герои</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="wrap">
+    <header class="topbar">
+      <div class="back"><button class="small-btn" data-href="index.html">◀ Назад</button></div>
+      <div class="player">👑 <span id="playerName">Игрок</span></div>
+      <div class="gold">💰 <span id="gold">100</span></div>
+    </header>
+
+    <main class="main-area">
+      <section class="heroes-panel">
+        <h2 class="pixel-title">Мои герои</h2>
+        <div id="heroesList" class="heroes-list"></div>
+
+        <div class="heroes-actions">
+          <button id="addHero" class="pixel-btn">➕ Добавить героя</button>
+          <button id="resetHeroes" class="pixel-btn">♻️ Сбросить</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    attachNavButtons();
+    renderHeroes();
+
+    document.getElementById('addHero').addEventListener('click', () => {
+      const name = prompt('Имя героя (например: Воин, Маг):', 'Воин');
+      if (!name) return;
+      addHero({name: name, lvl:1, atk: Math.ceil(Math.random()*4), def: Math.ceil(Math.random()*4)});
+      renderHeroes();
+    });
+
+    document.getElementById('resetHeroes').addEventListener('click', () => {
+      if (!confirm('Сбросить список героев?')) return;
+      localStorage.removeItem('heroes');
+      renderHeroes();
+    });
+  </script>
+</body>
+</html>
