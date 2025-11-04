@@ -1,81 +1,59 @@
-/* app.js — общий JS: Telegram init, профиль игрока, gold, heroes, shop, nav */
-(function(){
-  const tg = window.Telegram?.WebApp;
-  window.tg = tg;
-
-  // ======= CONFIG =======
+// app.js — общий скрипт (Telegram WebApp aware). Place in webapp/.
+(() => {
+  // --- CONFIG ---
   const START_GOLD = 100;
-  const STARTER_HERO = { id: genId(), name: '⚔️ Рыцарь', skin: 'default', lvl: 1, atk: 3, def: 2 };
+  const STARTER_HERO = { id: genId(), name: '⚔️ Рыцарь', skin: 'default', lvl:1, atk:3, def:2 };
+  const SHOP_ITEMS = [
+    { key:'mage', name:'🔥 Маг', price:150, base:{lvl:1,atk:4,def:1} },
+    { key:'archer', name:'🏹 Лучник', price:120, base:{lvl:1,atk:2,def:2} },
+    { key:'tank', name:'🛡️ Танк', price:200, base:{lvl:1,atk:1,def:5} }
+  ];
   const UPGRADE_COST = 100;
   const MAX_LEVEL = 5;
 
-  // shop items
-  const SHOP_ITEMS = [
-    { key: 'mage', name: '🔥 Маг', price: 150, base: { lvl:1, atk:4, def:1 }, sprite: 'mage' },
-    { key: 'archer', name: '🏹 Лучник', price: 120, base: { lvl:1, atk:2, def:2 }, sprite: 'archer' },
-    { key: 'tank', name: '🛡️ Танк', price: 200, base: { lvl:1, atk:1, def:5 }, sprite: 'tank' }
-  ];
-  // ======================
+  // Telegram
+  const tg = window.Telegram?.WebApp;
+  window.tg = tg;
 
-  // helper id generator
+  // helpers
   function genId(){ return 'h_' + Math.random().toString(36).slice(2,9); }
-
-  // get user identifier (use tg user id if available to separate players)
-  function getUserKeySuffix() {
-    try {
-      const u = tg?.initDataUnsafe?.user;
-      if (u?.id) return String(u.id);
-    } catch(e){/*ignore*/}
-    // fallback to anonymous
+  function getUserSuffix(){
+    try { const u = tg?.initDataUnsafe?.user; if (u?.id) return String(u.id); } catch(e){}
     return 'anon';
   }
+  const STORAGE_KEY = 'ccg_profile_' + getUserSuffix();
 
-  const STORAGE_KEY = 'ccg_profile_' + getUserKeySuffix();
-
-  // profile structure: { name, gold, heroes: [ {id,name,skin,lvl,atk,def} ] }
-  function createDefaultProfile() {
+  // profile helpers
+  function createDefaultProfile(){
     const u = tg?.initDataUnsafe?.user;
     const name = u ? (u.username ? '@' + u.username : (u.first_name || 'Игрок')) : 'Игрок (тест)';
-    return {
-      name,
-      gold: START_GOLD,
-      heroes: [ Object.assign({}, STARTER_HERO) ],
-      createdAt: Date.now()
-    };
+    return { name, gold: START_GOLD, heroes: [Object.assign({}, STARTER_HERO)], createdAt: Date.now() };
   }
 
-  function loadProfile() {
+  function loadProfile(){
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      const profile = createDefaultProfile();
-      saveProfile(profile);
-      return profile;
-    }
-    try {
-      return JSON.parse(raw);
-    } catch (e) {
-      const profile = createDefaultProfile();
-      saveProfile(profile);
-      return profile;
-    }
+    if (!raw) { const p = createDefaultProfile(); saveProfile(p); return p; }
+    try { return JSON.parse(raw); } catch(e){ const p = createDefaultProfile(); saveProfile(p); return p; }
+  }
+  function saveProfile(p){ localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); updateUIAll(); }
+
+  // public API used by pages
+  window.getProfile = loadProfile;
+  window.saveProfile = saveProfile;
+  window.SHOP_ITEMS = SHOP_ITEMS;
+  window.UPGRADE_COST = UPGRADE_COST;
+  window.MAX_LEVEL = MAX_LEVEL;
+  window.genId = genId;
+
+  function changeGold(delta){
+    const p = loadProfile(); p.gold = Math.max(0, (p.gold||0) + delta); saveProfile(p); return p.gold;
   }
 
-  function saveProfile(profile) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-    updateUIAll();
+  function addHero(hero){
+    const p = loadProfile(); p.heroes.push(hero); saveProfile(p);
   }
 
-  function getGold() { return loadProfile().gold; }
-  function setGold(v) { const p = loadProfile(); p.gold = v; saveProfile(p); }
-  function changeGold(delta) { const p = loadProfile(); p.gold = Math.max(0, p.gold + delta); saveProfile(p); }
-
-  function addHeroToProfile(hero) {
-    const p = loadProfile();
-    p.heroes.push(hero);
-    saveProfile(p);
-  }
-
-  function upgradeHeroById(id) {
+  function upgradeHeroById(id){
     const p = loadProfile();
     const h = p.heroes.find(x=>x.id === id);
     if (!h) return { ok:false, reason:'nohero' };
@@ -83,56 +61,45 @@
     if (p.gold < UPGRADE_COST) return { ok:false, reason:'money' };
     p.gold -= UPGRADE_COST;
     h.lvl += 1;
-    // simple stat scaling
-    h.atk = Math.round(h.atk + Math.max(1, h.lvl * 0.6));
-    h.def = Math.round(h.def + Math.max(0, h.lvl * 0.5));
+    // stat growth formula (simple)
+    h.atk = Math.round(h.atk + 1 + h.lvl * 0.4);
+    h.def = Math.round(h.def + 0.5 + h.lvl * 0.35);
     saveProfile(p);
     return { ok:true, hero:h };
   }
 
-  function buyShopItem(itemKey) {
-    const item = SHOP_ITEMS.find(i=>i.key === itemKey);
+  function buyItem(key){
+    const item = SHOP_ITEMS.find(i=>i.key===key);
     if (!item) return { ok:false, reason:'noitem' };
     const p = loadProfile();
     if (p.gold < item.price) return { ok:false, reason:'money' };
     p.gold -= item.price;
-    const newHero = {
-      id: genId(),
-      name: item.name,
-      skin: item.sprite,
-      lvl: item.base.lvl,
-      atk: item.base.atk,
-      def: item.base.def
-    };
+    const newHero = { id: genId(), name: item.name, skin: item.key, lvl:item.base.lvl, atk:item.base.atk, def:item.base.def };
     p.heroes.push(newHero);
     saveProfile(p);
     return { ok:true, hero:newHero };
   }
 
-  // ===== UI helpers exposed to pages =====
-  window.getProfile = loadProfile;
-  window.saveProfile = saveProfile;
-  window.buyShopItem = buyShopItem;
+  // expose
+  window.buyItem = buyItem;
   window.upgradeHeroById = upgradeHeroById;
-  window.SHOP_ITEMS = SHOP_ITEMS;
-  window.UPGRADE_COST = UPGRADE_COST;
-  window.MAX_LEVEL = MAX_LEVEL;
+  window.addHero = addHero;
+  window.changeGold = changeGold;
 
-  // Update topbar elements across pages
-  function updateUIAll() {
+  // UI functions
+  function updateUIAll(){
     const p = loadProfile();
-    // player name
-    document.querySelectorAll('#playerName').forEach(el=>{ if(el) el.textContent = p.name; });
-    // gold
-    document.querySelectorAll('#gold').forEach(el=>{ if(el) el.textContent = p.gold; });
-    // heroes render if there's a container
+    document.querySelectorAll('#playerName').forEach(e=> e.textContent = p.name);
+    document.querySelectorAll('#gold').forEach(e=> e.textContent = p.gold);
+    // render heroes and shop where present
     if (document.getElementById('heroesList')) renderHeroes();
-    if (document.getElementById('deckList')) renderMiniDeck();
     if (document.getElementById('shopList')) renderShop();
+    if (document.getElementById('deckList')) renderMiniDeck();
   }
+  window.updateUIAll = updateUIAll;
 
-  // attach nav buttons with data-href
-  window.attachNavButtons = function(){
+  // navigation
+  function attachNavButtons(){
     document.querySelectorAll('[data-href]').forEach(btn=>{
       btn.addEventListener('click', ()=> {
         const href = btn.getAttribute('data-href');
@@ -140,133 +107,29 @@
         window.location.href = href;
       });
     });
-  };
-
-  // Render mini deck on index
-  function renderMiniDeck() {
-    const deckList = document.getElementById('deckList');
-    if (!deckList) return;
-    const p = loadProfile();
-    deckList.innerHTML = '';
-    p.heroes.slice(0,4).forEach(h=>{
-      const el = document.createElement('div'); el.className='mini-card';
-      el.innerHTML = `<div class="card-sprite" data-id="${h.id}"></div>
-                      <div class="card-meta"><div class="cname">${h.name}</div><div class="cstats">ур.${h.lvl}</div></div>`;
-      deckList.appendChild(el);
-    });
   }
+  window.attachNavButtons = attachNavButtons;
 
-  // ====== HEROES page render ======
-  window.renderHeroes = function(){
-    const container = document.getElementById('heroesList');
-    if(!container) return;
-    const p = loadProfile();
-    container.innerHTML = '';
-    if (p.heroes.length === 0) {
-      container.innerHTML = '<div class="mini-card">У тебя ещё нет героев. Купи в магазине или получи подарок.</div>';
-      return;
-    }
-    p.heroes.forEach((h, idx)=>{
-      const el = document.createElement('div'); el.className='hero-item';
-      el.innerHTML = `
-        <div style="width:52px;height:52px;background:#000;border:4px solid #03101b;image-rendering:pixelated"></div>
-        <div style="flex:1">
-          <div style="font-size:11px">${h.name} <span style="font-size:9px;color:#9fb1c8"> (ур. ${h.lvl})</span></div>
-          <div style="font-size:9px;color:#9fb1c8">ATK ${h.atk} • DEF ${h.def}</div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <button class="pixel-btn upgrade-btn" data-id="${h.id}">🔼 Прокачать</button>
-        </div>
-      `;
-      container.appendChild(el);
-    });
-
-    // attach upgrade handlers
-    container.querySelectorAll('.upgrade-btn').forEach(btn=>{
-      btn.addEventListener('click', async (ev)=>{
-        const id = btn.getAttribute('data-id');
-        const res = upgradeHeroById(id);
-        if (!res.ok) {
-          if (res.reason === 'money') return alert(`Недостаточно золота. Стоимость прокачки: ${UPGRADE_COST}`);
-          if (res.reason === 'max') return alert('Герой уже максимального уровня.');
-          return alert('Ошибка апгрейда.');
-        }
-        // show small success
-        alert('Прокачка успешна! Золото списано.');
-        updateUIAll();
-      });
-    });
-  };
-
-  // ====== SHOP render ======
-  function renderShop() {
-    const container = document.getElementById('shopList');
-    if(!container) return;
-    container.innerHTML = '';
-    SHOP_ITEMS.forEach(item => {
-      const card = document.createElement('div'); card.className = 'mini-card';
-      card.innerHTML = `
-        <div class="card-sprite"></div>
-        <div class="card-meta">
-          <div class="cname">${item.name}</div>
-          <div class="cstats">Цена: ${item.price} зол.</div>
-          <div style="margin-top:6px"><button class="pixel-btn buy-btn" data-key="${item.key}">Купить</button></div>
-        </div>
-      `;
-      container.appendChild(card);
-    });
-    // buy handlers
-    container.querySelectorAll('.buy-btn').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const key = btn.getAttribute('data-key');
-        const res = buyShopItem(key);
-        if (!res.ok) {
-          if (res.reason === 'money') return alert('Недостаточно золота для покупки.');
-          return alert('Ошибка покупки.');
-        }
-        alert(`Куплено: ${res.hero.name}`);
-        updateUIAll();
-      });
-    });
-  }
-  window.renderShop = renderShop;
-
-  // ====== Arena drawing util for pages ======
+  // canvas utilities
   window.drawArenaCanvas = function(canvasId){
-    const canvas = document.getElementById(canvasId);
+    const id = canvasId || null;
+    if (!id) return;
+    const canvas = document.getElementById(id);
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const w = 40, h = 24;
-    const off = document.createElement('canvas'); off.width = w; off.height = h;
-    const octx = off.getContext('2d');
-
-    // basic pixel layers
-    for(let y=0;y<h;y++){
-      for(let x=0;x<w;x++){
-        if (y < 5) octx.fillStyle = '#79b7ff';
-        else if (y < 9) octx.fillStyle = '#a6e6b8';
-        else if (y < 17) octx.fillStyle = '#4caf50';
-        else octx.fillStyle = '#2f6e2f';
-        octx.fillRect(x,y,1,1);
-      }
-    }
-    for(let x=12;x<28;x++){
-      for(let y=9;y<13;y++){
-        octx.fillStyle = '#3aa0ff';
-        octx.fillRect(x,y,1,1);
-      }
-    }
+    // draw stylized arena (not pixel)
+    const W = canvas.width, H = canvas.height;
+    // sky
+    const sky = ctx.createLinearGradient(0,0,0,H); sky.addColorStop(0,'#9fd8ff'); sky.addColorStop(1,'#5fb6ff');
+    ctx.fillStyle = sky; ctx.fillRect(0,0,W,H);
+    // field
+    ctx.fillStyle = '#2ea24a'; ctx.fillRect(0,H*0.35,W,H*0.65);
+    // river
+    ctx.fillStyle = '#39a6ff'; ctx.fillRect(W*0.36,H*0.45,W*0.28,H*0.14);
     // towers
-    for(let y=5;y<11;y++){
-      octx.fillStyle = '#6b4c2b';
-      octx.fillRect(3,y,3,1);
-      octx.fillRect(w-6,y,3,1);
-    }
-    octx.fillStyle = '#ffd54f'; octx.fillRect(4,4,1,1); octx.fillRect(w-5,4,1,1);
-
-    ctx.imageSmoothingEnabled = false;
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    ctx.drawImage(off,0,0,canvas.width,canvas.height);
+    ctx.fillStyle = '#6b4c2b'; ctx.fillRect(20,H*0.28,50,60); ctx.fillRect(W-70,H*0.28,50,60);
+    // flags
+    ctx.fillStyle = '#ffd54f'; ctx.fillRect(38,H*0.22,8,8); ctx.fillRect(W-54,H*0.22,8,8);
   };
 
   window.flashCanvas = function(canvasId){
@@ -276,22 +139,99 @@
     setTimeout(()=> c.classList.remove('flash-anim'), 350);
   };
 
-  // initialization on page load
+  // render mini deck on index
+  function renderMiniDeck(){
+    const el = document.getElementById('deckList'); if (!el) return;
+    const p = loadProfile(); el.innerHTML = '';
+    p.heroes.slice(0,4).forEach(h=>{
+      const node = document.createElement('div'); node.className = 'mini-card';
+      node.innerHTML = `<div class="card-sprite"></div><div class="card-meta"><div class="cname">${h.name}</div><div class="cstats">ур.${h.lvl}</div></div>`;
+      el.appendChild(node);
+    });
+  }
+
+  // render heroes page
+  function renderHeroes(){
+    const el = document.getElementById('heroesList'); if (!el) return;
+    const p = loadProfile();
+    el.innerHTML = '';
+    if (!p.heroes || p.heroes.length === 0) { el.innerHTML = '<div class="muted">У тебя ещё нет героев.</div>'; return; }
+    p.heroes.forEach(h=>{
+      const item = document.createElement('div'); item.className = 'hero-item';
+      item.innerHTML = `
+        <div class="left">
+          <div class="card-sprite" style="width:52px;height:52px;border-radius:8px;background:linear-gradient(135deg,#334;#56f)"></div>
+          <div>
+            <div style="font-weight:700">${h.name} <small style="color:${h.lvl>=MAX_LEVEL? '#ffd54f':'#98bcd8'}">ур. ${h.lvl}</small></div>
+            <div class="muted">ATK ${h.atk} • DEF ${h.def}</div>
+          </div>
+        </div>
+        <div>
+          <button class="btn small upgrade" data-id="${h.id}">🔼 ${UPGRADE_COST}</button>
+        </div>
+      `;
+      el.appendChild(item);
+    });
+
+    // attach upgrades
+    el.querySelectorAll('.upgrade').forEach(btn=>{
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const res = upgradeHeroById(id);
+        if (!res.ok) {
+          if (res.reason === 'money') return alert(`Недостаточно золота. Стоимость: ${UPGRADE_COST}`);
+          if (res.reason === 'max') return alert('Герой уже максимального уровня.');
+          return alert('Ошибка прокачки.');
+        }
+        alert('Прокачка успешна!');
+        updateUIAll();
+      });
+    });
+  }
+  window.renderHeroes = renderHeroes;
+
+  // render shop
+  function renderShop(){
+    const el = document.getElementById('shopList'); if (!el) return;
+    el.innerHTML = '';
+    SHOP_ITEMS.forEach(item=>{
+      const card = document.createElement('div'); card.className = 'shop-card';
+      card.innerHTML = `
+        <div class="card-sprite" style="width:72px;height:72px;border-radius:10px;background:linear-gradient(135deg,#223a6b,#2b8fb0)"></div>
+        <div style="text-align:center">
+          <div style="font-weight:800;margin-top:6px">${item.name}</div>
+          <div class="price">${item.price} зол.</div>
+          <div style="margin-top:8px"><button class="btn buy" data-key="${item.key}">Купить</button></div>
+        </div>
+      `;
+      el.appendChild(card);
+    });
+
+    el.querySelectorAll('.buy').forEach(btn=>{
+      btn.addEventListener('click', () => {
+        const key = btn.getAttribute('data-key');
+        const res = buyItem(key);
+        if (!res.ok) {
+          if (res.reason === 'money') return alert('Недостаточно золота.');
+          return alert('Ошибка покупки.');
+        }
+        alert(`Куплено: ${res.hero.name}`);
+        updateUIAll();
+      });
+    });
+  }
+  window.renderShop = renderShop;
+
+  // init on load
   document.addEventListener('DOMContentLoaded', () => {
-    // ensure profile exists and give starter hero on first visit (createDefaultProfile does that)
-    // (loadProfile already creates default if missing)
+    // ensure profile exists -> gives starter hero on first visit
     loadProfile();
-    initUIElements();
+    // populate UI elements if present
+    attachNavButtons();
     updateUIAll();
+    // render shop and heroes if pages present
+    renderShop();
+    renderHeroes();
   });
 
-  function initUIElements(){
-    attachNavButtons();
-    // render shop if present
-    renderShop();
-    // render heroes
-    renderHeroes();
-    // mini deck
-    renderMiniDeck();
-  }
 })();
