@@ -36,3 +36,197 @@
   <script type="module" src="./js/app.js"></script>
 </body>
 </html>
+<script type="module">
+import { cards, getOwnedSkins } from './js/skins.js';
+import { initUser } from './js/utils.js';
+initUser();
+
+const screenHome = document.getElementById('screen-home');
+const screenBattle = document.getElementById('screen-battle');
+const body = document.body;
+const countdownEl = document.getElementById('countdown');
+const battleArea = document.getElementById('battle-area');
+const battleLog = document.getElementById('battle-log');
+const rankImg = document.getElementById('rank-img');
+const rankLevel = document.getElementById('rank-level');
+const expBar = document.getElementById('exp-bar');
+const expText = document.getElementById('exp-text');
+const balanceEl = document.createElement('span');
+balanceEl.className = "ml-auto text-sm text-yellow-300 font-semibold";
+document.querySelector('header').appendChild(balanceEl);
+
+// --- функции сохранения ---
+function loadPlayerData() {
+  const stored = JSON.parse(localStorage.getItem("playerData") || "{}");
+  return {
+    level: stored.level || 1,
+    exp: stored.exp || 0,
+    balance: stored.balance || 0
+  };
+}
+function savePlayerData(data) {
+  localStorage.setItem("playerData", JSON.stringify(data));
+}
+let playerData = loadPlayerData();
+
+// ранги по уровню
+function getRankImage(level) {
+  if (level <= 10) return "img/ranks/bronze.png";
+  if (level <= 20) return "img/ranks/silver.png";
+  if (level <= 30) return "img/ranks/gold.png";
+  if (level <= 40) return "img/ranks/plat.png";
+  return "img/ranks/diamond.png";
+}
+
+// обновление UI
+function updatePlayerUI() {
+  rankImg.src = getRankImage(playerData.level);
+  rankLevel.textContent = playerData.level;
+  balanceEl.textContent = `💰 ${playerData.balance}`;
+  const nextLevelExp = playerData.level * 100;
+  expText.textContent = `⭐ ${playerData.exp} / ${nextLevelExp}`;
+  expBar.style.width = Math.min(100, (playerData.exp / nextLevelExp) * 100) + "%";
+}
+updatePlayerUI();
+
+// герой
+const hero = (getOwnedSkins()[0] || cards[0]);
+document.getElementById('hero-img').src = hero.image;
+document.getElementById('hero-info').textContent = `${hero.type} • HP: ${hero.hp} • Урон: ${hero.attack} • Щит: ${hero.defense}`;
+
+// бой (как раньше)
+function makeNewStats() {
+  return {
+    player: { hp: hero.hp, dmg: hero.attack, def: hero.defense },
+    bot: { hp: 1000, dmg: 150, def: 60 }
+  };
+}
+let state = makeNewStats();
+
+function setHPDisplays() {
+  document.getElementById('player-hp').textContent = `❤️ ${Math.max(0, Math.floor(state.player.hp))}`;
+  document.getElementById('bot-hp').textContent = `❤️ ${Math.max(0, Math.floor(state.bot.hp))}`;
+}
+
+function showDamage(containerEl, dmg) {
+  const dmgEl = document.createElement('div');
+  dmgEl.className = 'damage-text';
+  dmgEl.textContent = `-${dmg}`;
+  dmgEl.style.left = '50%';
+  dmgEl.style.transform = 'translateX(-50%)';
+  dmgEl.style.top = '8px';
+  containerEl.appendChild(dmgEl);
+  setTimeout(()=> dmgEl.remove(), 950);
+}
+
+function clearBattleVisuals() {
+  battleLog.textContent = '';
+  document.querySelectorAll('.damage-text').forEach(n => n.remove());
+  document.getElementById('player').style.animation = '';
+  document.getElementById('bot').style.animation = '';
+}
+
+document.getElementById('toBattle').onclick = async () => {
+  state = makeNewStats();
+  clearBattleVisuals();
+  showScreen('screen-battle');
+  body.classList.remove('home');
+  body.classList.add('battle');
+  setHPDisplays();
+  battleArea.classList.add('hidden');
+  for (let i = 5; i >= 0; i--) {
+    countdownEl.textContent = i === 0 ? 'Старт!' : `Старт через ${i}...`;
+    await new Promise(r => setTimeout(r, 1000));
+  }
+  countdownEl.textContent = '';
+  battleArea.classList.remove('hidden');
+  startAutoBattle();
+};
+
+function showScreen(id) {
+  const screens = ['screen-home','screen-battle'];
+  screens.forEach(sid => {
+    const el = document.getElementById(sid);
+    if (sid === id) {
+      el.classList.remove('hidden');
+      setTimeout(()=> el.classList.add('active'), 20);
+    } else {
+      el.classList.remove('active');
+      setTimeout(()=> el.classList.add('hidden'), 250);
+    }
+  });
+}
+
+// бой
+async function startAutoBattle() {
+  const playerEl = document.getElementById('player');
+  const botEl = document.getElementById('bot');
+  document.getElementById('player-img').src = hero.image;
+  document.getElementById('bot-img').src = cards[1]?.image || 'img/skins/bullit.png';
+
+  setHPDisplays();
+  let turn = 0;
+
+  while (state.player.hp > 0 && state.bot.hp > 0) {
+    await new Promise(r => setTimeout(r, 700));
+    if (turn % 2 === 0) {
+      playerEl.style.animation = "attackPlayer 600ms ease";
+      const dmg = Math.max(1, Math.round(state.player.dmg - state.bot.def));
+      state.bot.hp = Math.max(0, state.bot.hp - dmg);
+      showDamage(botEl, dmg);
+      setHPDisplays();
+      battleLog.textContent = `Ты нанёс ${dmg} урона`;
+    } else {
+      botEl.style.animation = "attackBot 600ms ease";
+      const dmg = Math.max(1, Math.round(state.bot.dmg - state.player.def));
+      state.player.hp = Math.max(0, state.player.hp - dmg);
+      showDamage(playerEl, dmg);
+      setHPDisplays();
+      battleLog.textContent = `Бот нанёс ${dmg} урона`;
+    }
+
+    await new Promise(r => setTimeout(r, 650));
+    playerEl.style.animation = '';
+    botEl.style.animation = '';
+
+    if (state.bot.hp <= 0 || state.player.hp <= 0) break;
+    turn++;
+  }
+
+  setHPDisplays();
+  const victory = state.bot.hp <= 0 && state.player.hp > 0;
+  battleLog.textContent = victory ? "🏆 Победа!" : "💀 Поражение!";
+
+  if (victory) {
+    const coins = Math.floor(Math.random() * 10) + 1;
+    const xp = Math.floor(Math.random() * 10) + 1;
+    playerData.balance += coins;
+    playerData.exp += xp;
+    const nextLevelExp = playerData.level * 100;
+    if (playerData.exp >= nextLevelExp) {
+      playerData.exp -= nextLevelExp;
+      playerData.level++;
+      battleLog.textContent += `\n✨ Новый уровень: ${playerData.level}!`;
+    }
+    savePlayerData(playerData);
+    updatePlayerUI();
+
+    const rewardMsg = document.createElement('div');
+    rewardMsg.className = "absolute bottom-10 bg-white/90 text-black px-4 py-2 rounded-xl shadow font-semibold";
+    rewardMsg.textContent = `+${coins} 💰  +${xp}⭐ опыта`;
+    document.body.appendChild(rewardMsg);
+    setTimeout(()=> rewardMsg.remove(), 2000);
+  }
+
+  await new Promise(r => setTimeout(r, 2000));
+  clearBattleVisuals();
+  await new Promise(r => setTimeout(r, 600));
+
+  showScreen('screen-home');
+  body.classList.remove('battle');
+  body.classList.add('home');
+  state = makeNewStats();
+  setHPDisplays();
+  setTimeout(()=> { battleLog.textContent = ''; countdownEl.textContent = ''; }, 200);
+}
+</script>
