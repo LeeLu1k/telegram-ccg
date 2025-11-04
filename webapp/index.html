@@ -1,36 +1,191 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mini Battle 3x3</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="style.css">
+
+  <style>
+    body {
+      overflow: hidden;
+      color: white;
+      font-family: 'Inter', sans-serif;
+      transition: background 1s ease;
+    }
+
+    /* Градиент — меняется при переходе на бой */
+    body.home {
+      background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364);
+      background-size: 400% 400%;
+      animation: gradientMove 15s ease infinite;
+    }
+
+    body.battle {
+      background: linear-gradient(180deg, #87ceeb, #e0f7ff);
+      overflow: hidden;
+    }
+
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Анимированные облака */
+    .cloud {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 50%;
+      filter: blur(10px);
+      animation: floatCloud 40s linear infinite;
+    }
+    @keyframes floatCloud {
+      from { transform: translateX(-200px); }
+      to { transform: translateX(120vw); }
+    }
+
+    /* Эффект плавного появления */
+    .fade {
+      opacity: 0;
+      transform: scale(0.97);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .fade.active {
+      opacity: 1;
+      transform: scale(1);
+    }
+  </style>
 </head>
 
-<body class="flex flex-col min-h-screen text-white font-sans">
-  <header class="glass flex items-center gap-3 p-4 border-b border-white/10">
+<body class="home flex flex-col min-h-screen">
+
+  <!-- HEADER -->
+  <header id="header" class="glass flex items-center gap-3 p-4 border-b border-white/10">
     <img id="user-photo" class="w-10 h-10 rounded-full border-2 border-cyan-400">
     <span id="user-name" class="text-lg font-semibold"></span>
   </header>
 
-  <main class="flex-1 flex flex-col items-center justify-center text-center p-6">
-    <div class="glass p-6 rounded-2xl w-full max-w-sm">
-      <h1 class="text-3xl font-bold text-cyan-400 mb-3">Твой герой</h1>
-      <img src="assets/hero.png" class="mx-auto w-24 h-24 mb-3 rounded-full border-2 border-cyan-400">
-      <p class="text-gray-300 mb-4">🧙‍♂️ Новичок<br>HP: 120 • Урон: 25 • Щит: 10</p>
-      <a href="battle.html" class="bg-gradient-to-r from-cyan-500 to-blue-500 py-3 px-10 rounded-xl font-semibold hover:from-blue-400 hover:to-cyan-400 inline-block">
-        ⚔️ В бой
-      </a>
-    </div>
+  <!-- MAIN CONTAINER -->
+  <main id="app" class="flex-1 relative overflow-hidden">
+    <!-- Главная -->
+    <section id="screen-home" class="fade active absolute inset-0 flex flex-col items-center justify-center text-center">
+      <div class="glass p-6 rounded-2xl w-full max-w-sm">
+        <h1 class="text-3xl font-bold text-cyan-400 mb-3">Твой герой</h1>
+        <img id="hero-img" src="img/skins/spikly.png" class="mx-auto w-24 h-24 mb-3 rounded-full border-2 border-cyan-400">
+        <p id="hero-info" class="text-gray-300 mb-4">🧙‍♂️ Новичок<br>HP: 120 • Урон: 25 • Щит: 10</p>
+        <button id="toBattle"
+          class="bg-gradient-to-r from-cyan-500 to-blue-500 py-3 px-10 rounded-xl font-semibold hover:from-blue-400 hover:to-cyan-400">
+          ⚔️ В бой
+        </button>
+      </div>
+    </section>
+
+    <!-- Бой -->
+    <section id="screen-battle" class="fade absolute inset-0 flex flex-col items-center justify-center text-center hidden">
+      <div class="cloud w-32 h-20 top-20 left-[-150px]" style="animation-delay:0s"></div>
+      <div class="cloud w-40 h-24 top-40 left-[-200px]" style="animation-delay:10s"></div>
+      <div class="cloud w-28 h-18 top-60 left-[-250px]" style="animation-delay:20s"></div>
+
+      <h2 class="text-2xl text-blue-700 font-bold mb-4 drop-shadow-lg">🌤️ Небесная Арена</h2>
+      <div id="countdown" class="text-3xl font-bold text-gray-800 mb-4"></div>
+
+      <div id="battle-area" class="hidden w-full max-w-md flex justify-between items-center px-6">
+        <div class="glass p-4 rounded-xl w-[45%]">
+          <img src="img/skins/spikly.png" class="w-20 h-20 rounded-full border-2 border-cyan-400 mx-auto mb-2">
+          <p id="player-hp" class="text-gray-900">❤️ 1200</p>
+        </div>
+        <div class="glass p-4 rounded-xl w-[45%]">
+          <img src="img/skins/bullit.png" class="w-20 h-20 rounded-full border-2 border-rose-400 mx-auto mb-2">
+          <p id="bot-hp" class="text-gray-900">❤️ 1000</p>
+        </div>
+      </div>
+
+      <button id="attackBtn"
+        class="hidden mt-8 bg-gradient-to-r from-pink-500 to-rose-500 py-3 px-10 rounded-xl font-semibold text-white hover:from-rose-400 hover:to-pink-400">
+        🗡️ Атаковать
+      </button>
+
+      <p id="battle-log" class="text-gray-900 mt-4 text-sm"></p>
+      <button id="backBtn" class="hidden mt-8 text-gray-800 underline">🏠 Назад</button>
+    </section>
   </main>
 
-  <footer class="text-center text-gray-400 text-xs py-3 glass border-t border-white/10">
-    © 2025 MiniBattle Studio
-  </footer>
+  <script type="module">
+    import { cards } from './js/skins.js';
+    import { initUser } from './js/utils.js';
+    initUser();
 
-  <script src="js/utils.js"></script>
-  <script src="js/main.js"></script>
+    const hero = cards[0];
+    document.querySelector('#hero-img').src = hero.image;
+    document.querySelector('#hero-info').textContent = `${hero.type} • HP: ${hero.hp} • Атака: ${hero.attack}`;
+
+    const screenHome = document.getElementById('screen-home');
+    const screenBattle = document.getElementById('screen-battle');
+    const countdownEl = document.getElementById('countdown');
+    const app = document.getElementById('app');
+    const body = document.body;
+
+    document.getElementById('toBattle').onclick = async () => {
+      // плавный переход
+      screenHome.classList.remove('active');
+      screenHome.classList.add('hidden');
+      screenBattle.classList.remove('hidden');
+      setTimeout(() => screenBattle.classList.add('active'), 50);
+      body.classList.remove('home');
+      body.classList.add('battle');
+
+      // отсчёт
+      for (let i = 5; i >= 0; i--) {
+        countdownEl.textContent = `Бой начнётся через ${i}...`;
+        await new Promise(r => setTimeout(r, 1000));
+      }
+      countdownEl.textContent = '';
+      startBattle();
+    };
+
+    function startBattle() {
+      const battleArea = document.getElementById('battle-area');
+      const attackBtn = document.getElementById('attackBtn');
+      const log = document.getElementById('battle-log');
+      const backBtn = document.getElementById('backBtn');
+      battleArea.classList.remove('hidden');
+      attackBtn.classList.remove('hidden');
+
+      let player = { hp: hero.hp, dmg: hero.attack, def: 40 };
+      let bot = { hp: 1000, dmg: 150, def: 60 };
+
+      attackBtn.onclick = () => {
+        const dmgToBot = Math.max(1, player.dmg - bot.def);
+        bot.hp -= dmgToBot;
+        document.getElementById("bot-hp").textContent = `❤️ ${bot.hp}`;
+        if (bot.hp <= 0) return endBattle(true);
+
+        const dmgToPlayer = Math.max(1, bot.dmg - player.def);
+        player.hp -= dmgToPlayer;
+        document.getElementById("player-hp").textContent = `❤️ ${player.hp}`;
+        if (player.hp <= 0) return endBattle(false);
+
+        log.textContent = `Ты нанёс ${dmgToBot}, бот ответил ${dmgToPlayer}`;
+      };
+
+      function endBattle(win) {
+        attackBtn.disabled = true;
+        log.textContent = win ? "🏆 Победа!" : "💀 Поражение!";
+        backBtn.classList.remove('hidden');
+        backBtn.onclick = () => {
+          screenBattle.classList.remove('active');
+          setTimeout(() => {
+            screenBattle.classList.add('hidden');
+            screenHome.classList.remove('hidden');
+            setTimeout(() => screenHome.classList.add('active'), 50);
+            body.classList.remove('battle');
+            body.classList.add('home');
+          }, 600);
+        };
+      }
+    }
+  </script>
 </body>
 </html>
