@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Карточная Арена — Мои герои</title>
+  <title>Мои герои — Карточная Арена</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -20,8 +20,8 @@
         <h2 class="pixel-title">Мои герои</h2>
         <div id="heroesList" class="heroes-list"></div>
 
-        <div class="heroes-actions">
-          <button id="addHero" class="pixel-btn">➕ Добавить героя</button>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button id="addHero" class="pixel-btn">➕ Добавить (тест)</button>
           <button id="resetHeroes" class="pixel-btn">♻️ Сбросить</button>
         </div>
       </section>
@@ -33,16 +33,19 @@
     attachNavButtons();
     renderHeroes();
 
-    document.getElementById('addHero').addEventListener('click', () => {
-      const name = prompt('Имя героя (например: Воин, Маг):', 'Воин');
+    document.getElementById('addHero').addEventListener('click', ()=>{
+      const name = prompt('Имя героя:', 'Новый герой');
       if (!name) return;
-      addHero({name: name, lvl:1, atk: Math.ceil(Math.random()*4), def: Math.ceil(Math.random()*4)});
+      addHero({name, lvl:1, atk:2, def:2, id:('h_'+Math.random().toString(36).slice(2,9)), skin:'default'});
+      alert('Герой добавлен (тест).');
       renderHeroes();
     });
 
-    document.getElementById('resetHeroes').addEventListener('click', () => {
-      if (!confirm('Сбросить список героев?')) return;
-      localStorage.removeItem('heroes');
+    document.getElementById('resetHeroes').addEventListener('click', ()=>{
+      if (!confirm('Сбросить всех героев? (удалит и подаренного)')) return;
+      const profile = getProfile();
+      profile.heroes = [];
+      saveProfile(profile);
       renderHeroes();
     });
   </script>
