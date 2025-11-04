@@ -10,52 +10,40 @@ const bot = new Telegraf(TOKEN);
 const app = express();
 app.use(express.json());
 
-const WEBAPP_URL = process.env.WEBAPP_URL || 'https://telegram-ccg-production.up.railway.app/webapp/index.html';
+// URL веб-приложения
+const WEBAPP_URL = process.env.WEBAPP_URL || 'https://yourapp-production.up.railway.app/webapp/index.html';
 
-// --- Bot handlers ---
+// --- Команды бота ---
 bot.start((ctx) => {
-  const user = ctx.from;
-  console.log(`Игрок вошёл: ${user.username || user.first_name} (ID: ${user.id})`);
-
-  ctx.reply(`👋 Привет, ${user.first_name || user.username || 'Игрок'}! Добро пожаловать в Коллекционную Карточную Игру 🎮`, {
+  ctx.reply(`👋 Привет, ${ctx.from.first_name || ctx.from.username || 'Игрок'}!`, {
     reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: '🚀 Открыть игру',
-            web_app: { url: WEBAPP_URL }
-          }
-        ]
-      ]
+      inline_keyboard: [[
+        { text: '🚀 Открыть игру', web_app: { url: WEBAPP_URL } }
+      ]]
     }
   });
 });
 
-bot.command('newgame', (ctx) => {
-  ctx.reply('Создаю новую игру ⚔️', {
+bot.command('play', (ctx) => {
+  ctx.reply('🎮 Запуск мини-игры', {
     reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: '🎮 Играть сейчас',
-            web_app: { url: WEBAPP_URL }
-          }
-        ]
-      ]
+      inline_keyboard: [[
+        { text: '⚔️ Играть сейчас', web_app: { url: WEBAPP_URL } }
+      ]]
     }
   });
 });
 
-// --- Webhook setup ---
+// --- Webhook ---
 const TELEGRAM_PATH = `/telegraf/${TOKEN}`;
 app.use(bot.webhookCallback(TELEGRAM_PATH));
 
-// Serve static webapp (HTML + JS + CSS)
+// --- WebApp статические файлы ---
 app.use('/webapp', express.static(path.join(__dirname, 'webapp')));
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, async () => {
-  const publicUrl = process.env.PUBLIC_URL || 'https://telegram-ccg-production.up.railway.app';
+  const publicUrl = process.env.PUBLIC_URL || `https://yourapp-production.up.railway.app`;
   const webhookUrl = `${publicUrl}${TELEGRAM_PATH}`;
   try {
     await bot.telegram.setWebhook(webhookUrl);
@@ -63,5 +51,5 @@ app.listen(PORT, async () => {
   } catch (err) {
     console.error('❌ Failed to set webhook:', err);
   }
-  console.log(`Server running on ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
