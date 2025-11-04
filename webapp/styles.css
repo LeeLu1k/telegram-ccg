@@ -1,0 +1,69 @@
+:root{
+  --bg:#0a1220;
+  --panel:#141e2a;
+  --accent:#ffd54f;
+  --muted:#cfe8ff;
+  --pixel-border:4px;
+  font-size:14px;
+}
+
+/* page layout - mobile friendly (9:16) */
+html,body{height:100%;margin:0;background:linear-gradient(180deg,#091026 0%, #0b1630 100%);font-family:'Press Start 2P', monospace;color:var(--muted);-webkit-font-smoothing:none}
+#app{display:flex;flex-direction:column;height:100vh;max-width:420px;margin:0 auto;border-left:12px solid rgba(0,0,0,0.2);border-right:12px solid rgba(0,0,0,0.2)}
+
+/* TOP BAR - pixel style */
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:10px;background:linear-gradient(180deg,#12263e,#081426);border-bottom:var(--pixel-border) solid #071224}
+.topbar .player,.topbar .trophies,.topbar .gold{font-size:10px}
+
+/* flash animation for gold */
+#gold.flash{animation:goldFlash 450ms ease;}
+@keyframes goldFlash{50%{transform:scale(1.2);color:#ffd54f}100%{transform:scale(1);color:inherit}}
+
+/* VIEWPORT area: arena + deck */
+.viewport{flex:1;display:flex;flex-direction:column;gap:8px;padding:12px;align-items:center;justify-content:center}
+
+/* arena panel */
+.arena-panel{width:100%;max-width:380px;background:linear-gradient(180deg,#2f8b3a,#235f2a);border:var(--pixel-border) solid #071224;border-radius:8px;position:relative;padding:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:8px 8px 0 rgba(0,0,0,0.6) inset}
+#arenaCanvas{width:100%;height:auto;border:2px solid rgba(0,0,0,0.2);image-rendering:pixelated;display:block;border-radius:4px;}
+
+/* small hud overlay (towers/river visuals) */
+.arena-hud{position:absolute;left:8px;right:8px;top:10px;bottom:10px;pointer-events:none;display:flex;align-items:center;justify-content:space-between}
+.arena-hud .tower{font-size:18px;filter:drop-shadow(1px 1px 0 #000)}
+.arena-hud .river{position:absolute;left:calc(50% - 40px);width:80px;height:12px;background:rgba(58,160,255,0.18);border-radius:4px}
+
+/* deck */
+.deck-panel{width:100%;display:flex;flex-direction:column;align-items:flex-start;padding:6px}
+.deck-title{font-size:10px;color:var(--accent);margin-bottom:6px}
+.deck-list{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}
+.mini-card{min-width:110px;background:linear-gradient(180deg,#182b2a,#0f2220);border:3px solid #071224;padding:6px;border-radius:6px;display:flex;gap:6px;align-items:center;box-shadow:4px 4px 0 rgba(0,0,0,0.6)}
+.card-sprite{width:36px;height:36px;background:#0a0a0a;border:3px solid #071224;image-rendering:pixelated}
+.card-meta{font-size:8px}
+.cname{color:#fff}
+.cstats{color:#9fb1c8;font-size:7px;margin-top:4px}
+
+/* bottom pixel nav */
+.bottombar{display:flex;justify-content:space-around;gap:8px;padding:10px;background:linear-gradient(180deg,#071224,#051220);border-top:var(--pixel-border) solid #071224}
+.pixel-btn{font-family:'Press Start 2P';font-size:10px;padding:8px 10px;border-radius:8px;border:4px solid #071224;background:linear-gradient(180deg,#ffd54f,#f9a825);box-shadow:0 6px #b9770e;cursor:pointer;transition:transform .08s}
+.pixel-btn:active{transform:translateY(3px);box-shadow:0 3px #b9770e}
+.pixel-btn.primary{background:linear-gradient(180deg,#6ef6a4,#2dd96c);box-shadow:0 6px #0f7a42}
+
+/* modal (pixel popup) */
+.modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);pointer-events:none}
+.modal.show{pointer-events:auto}
+.modal.hidden{display:none}
+.modal-box{width:88%;max-width:320px;background:linear-gradient(180deg,#121827,#0c1422);border:6px solid #071224;padding:16px;border-radius:8px;box-shadow:12px 12px 0 rgba(0,0,0,0.7)}
+.modal-box.win{border-color:#1f8f4a}
+.modal-box.lose{border-color:#8f1f1f}
+.modal-box h3{margin:0 0 8px 0;font-size:12px;text-align:center}
+.modal-box p{margin:0 0 12px 0;font-size:10px;text-align:center}
+.modal-actions{text-align:center}
+
+/* subtle canvas flash */
+#arenaCanvas.flash-anim{animation:arenaFlash .35s ease}
+@keyframes arenaFlash{0%{filter:brightness(1)}50%{filter:brightness(1.6) contrast(1.1)}100%{filter:brightness(1)}}
+
+/* responsive tweaks */
+@media (max-width:420px){
+  #app{border-left:6px solid rgba(0,0,0,0.25);border-right:6px solid rgba(0,0,0,0.25)}
+  .mini-card{min-width:96px}
+}
