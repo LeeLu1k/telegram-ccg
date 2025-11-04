@@ -16,16 +16,33 @@ userName.textContent = tg.initDataUnsafe?.user?.first_name || "Игрок";
 userPhoto.src = tg.initDataUnsafe?.user?.photo_url || skins[0].image;
 balance.textContent = user.balance ?? 0;
 
+// ====== Ранг ======
+function getRankImage(level) {
+  if (level <= 10) return "img/ranks/bronze.png";
+  if (level <= 20) return "img/ranks/silver.png";
+  if (level <= 30) return "img/ranks/gold.png";
+  if (level <= 40) return "img/ranks/platinum.png";
+  if (level <= 50) return "img/ranks/diamond.png";
+  return "img/ranks/master.png";
+}
+
 // ====== СКИН ======
 const selectedSkin = skins.find(s => s.id === user.selectedSkin) || skins[0];
 
 // ====== ГЛАВНЫЙ ЭКРАН ======
+const rankImg = getRankImage(user.level); // теперь можно вызывать
+
 homeScreen.innerHTML = `
   <div class="flex flex-col items-center text-center mt-6">
     <img src="${selectedSkin.image}" class="w-28 h-28 rounded-full border-2 border-cyan-400 shadow-lg" />
     <h2 class="text-xl font-bold mt-3 text-cyan-300">${selectedSkin.name}</h2>
     <p class="text-gray-300 text-sm mt-1">HP: ${selectedSkin.hp} ⚔️ ${selectedSkin.attack}</p>
-    <p class="text-gray-400 text-sm mt-1">Уровень: ${user.level}</p>
+
+    <div class="flex flex-col items-center mt-2">
+      <p class="text-gray-400 text-sm">Уровень: ${user.level}</p>
+      <img src="${rankImg}" alt="Ранг" class="w-14 h-14 mt-1 rounded-full border border-white/30 shadow-lg" />
+    </div>
+
     <button id="startBattle" class="mt-5 bg-gradient-to-r from-cyan-500 to-blue-500 px-8 py-3 rounded-xl text-white font-semibold hover:scale-105 transition">
       🎮 В бой
     </button>
