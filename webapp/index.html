@@ -6,171 +6,31 @@
   <title>Mini Battle 3x3</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <style>
-    body {
-      background: linear-gradient(-45deg, #1e1e2f, #121212, #0f2027, #203a43, #2c5364);
-      background-size: 400% 400%;
-      animation: gradientMove 15s ease infinite;
-    }
-    @keyframes gradientMove {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    .glass {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
-    }
-    .fade { transition: opacity 0.5s ease; }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 
-<body class="text-white font-sans flex flex-col min-h-screen overflow-hidden">
-
-  <!-- HEADER -->
+<body class="flex flex-col min-h-screen text-white font-sans">
   <header class="glass flex items-center gap-3 p-4 border-b border-white/10">
-    <img id="user-photo" src="" class="w-10 h-10 rounded-full border-2 border-cyan-400">
-    <span id="user-name" class="text-lg font-semibold tracking-wide"></span>
+    <img id="user-photo" class="w-10 h-10 rounded-full border-2 border-cyan-400">
+    <span id="user-name" class="text-lg font-semibold"></span>
   </header>
 
-  <!-- Главная -->
-  <main id="screen-main" class="fade flex-1 flex flex-col items-center justify-center text-center p-6">
-    <div class="glass p-6 rounded-2xl max-w-sm w-full shadow-lg">
-      <h1 class="text-3xl text-cyan-400 font-bold mb-3">Твой герой</h1>
-      <img src="https://i.imgur.com/XxMT8gh.png" alt="hero" class="mx-auto w-24 h-24 mb-4 rounded-full border-2 border-cyan-400">
+  <main class="flex-1 flex flex-col items-center justify-center text-center p-6">
+    <div class="glass p-6 rounded-2xl w-full max-w-sm">
+      <h1 class="text-3xl font-bold text-cyan-400 mb-3">Твой герой</h1>
+      <img src="assets/hero.png" class="mx-auto w-24 h-24 mb-3 rounded-full border-2 border-cyan-400">
       <p class="text-gray-300 mb-4">🧙‍♂️ Новичок<br>HP: 120 • Урон: 25 • Щит: 10</p>
-      <button id="toBattle" class="bg-gradient-to-r from-cyan-500 to-blue-500 py-3 px-10 rounded-xl font-semibold hover:from-blue-400 hover:to-cyan-400">
+      <a href="battle.html" class="bg-gradient-to-r from-cyan-500 to-blue-500 py-3 px-10 rounded-xl font-semibold hover:from-blue-400 hover:to-cyan-400 inline-block">
         ⚔️ В бой
-      </button>
+      </a>
     </div>
   </main>
 
-  <!-- Бой (подготовка) -->
-  <main id="screen-battle" class="fade hidden flex-1 flex-col items-center justify-center text-center p-6">
-    <h2 class="text-2xl font-bold text-cyan-400 mb-4">🌍 Карта: Лесная арена</h2>
-    <img src="https://i.imgur.com/YcI8n0u.jpeg" alt="map" class="w-full max-w-md rounded-2xl shadow-lg mb-6 border border-cyan-500/30">
-    <button id="startBattle" class="bg-gradient-to-r from-emerald-500 to-cyan-500 py-3 px-10 rounded-xl text-lg font-semibold shadow-md hover:from-cyan-400 hover:to-emerald-400">
-      🚀 Начать бой
-    </button>
-  </main>
+  <footer class="text-center text-gray-400 text-xs py-3 glass border-t border-white/10">
+    © 2025 MiniBattle Studio
+  </footer>
 
-  <!-- Синхронизация -->
-  <main id="screen-loading" class="fade hidden flex-1 flex-col items-center justify-center text-center">
-    <h2 class="text-xl text-cyan-300 mb-2 animate-pulse">🔄 Синхронизация...</h2>
-    <div id="countdown" class="text-4xl font-bold text-cyan-400 mt-2"></div>
-  </main>
-
-  <!-- Бой (сражение) -->
-  <main id="screen-fight" class="fade hidden flex-1 flex-col items-center justify-center text-center p-6">
-    <h2 class="text-2xl font-bold text-cyan-400 mb-4">⚔️ Битва началась!</h2>
-    <div class="flex justify-between w-full max-w-md mb-6">
-      <div class="glass p-4 rounded-xl w-[45%]">
-        <img src="https://i.imgur.com/XxMT8gh.png" class="mx-auto w-20 h-20 rounded-full border-2 border-cyan-400 mb-2">
-        <h3 class="text-cyan-300 font-semibold mb-1">Ты</h3>
-        <p id="player-hp">❤️ 120</p>
-      </div>
-      <div class="glass p-4 rounded-xl w-[45%]">
-        <img src="https://i.imgur.com/saYgEfe.png" class="mx-auto w-20 h-20 rounded-full border-2 border-rose-400 mb-2">
-        <h3 class="text-rose-300 font-semibold mb-1">🤖 Бот</h3>
-        <p id="bot-hp">❤️ 100</p>
-      </div>
-    </div>
-    <button id="attack" class="bg-gradient-to-r from-pink-500 to-rose-500 py-3 px-8 rounded-xl font-semibold hover:from-rose-400 hover:to-pink-400">
-      🗡️ Атаковать
-    </button>
-    <p id="log" class="text-gray-300 mt-4 text-sm min-h-[2rem]"></p>
-  </main>
-
-  <!-- Результат -->
-  <main id="screen-result" class="fade hidden flex-1 flex-col items-center justify-center text-center p-6">
-    <h2 id="result-title" class="text-3xl font-bold mb-3"></h2>
-    <img id="result-img" class="w-32 h-32 mx-auto mb-4 rounded-full border-4 shadow-lg">
-    <button id="backHome" class="bg-gradient-to-r from-cyan-500 to-blue-500 py-3 px-8 rounded-xl font-semibold hover:from-blue-400 hover:to-cyan-400">
-      🏠 На главную
-    </button>
-  </main>
-
-  <footer class="text-center text-gray-400 text-xs py-3 glass border-t border-white/10">© 2025 MiniBattle Studio</footer>
-
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
-
-    // Telegram user
-    const user = tg.initDataUnsafe?.user;
-    document.getElementById("user-name").textContent = user ? (user.first_name + (user.last_name ? " " + user.last_name : "")) : "Игрок";
-    document.getElementById("user-photo").src = user?.photo_url || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-
-    // Elements
-    const screens = ["screen-main", "screen-battle", "screen-loading", "screen-fight", "screen-result"].map(id => document.getElementById(id));
-    const show = (id) => screens.forEach(s => s.id === id ? s.classList.remove("hidden") : s.classList.add("hidden"));
-
-    // Data
-    let player = { hp: 120, dmg: 25, def: 10 };
-    let bot = { hp: 100, dmg: 20, def: 5 };
-
-    // Navigation
-    document.getElementById("toBattle").onclick = () => show("screen-battle");
-
-    document.getElementById("startBattle").onclick = async () => {
-      show("screen-loading");
-      document.getElementById("countdown").textContent = "";
-      await new Promise(res => setTimeout(res, 1500));
-      let time = 5;
-      const countdownEl = document.getElementById("countdown");
-      const timer = setInterval(() => {
-        countdownEl.textContent = time;
-        if (time <= 0) {
-          clearInterval(timer);
-          show("screen-fight");
-        }
-        time--;
-      }, 1000);
-    };
-
-    // Fight
-    document.getElementById("attack").onclick = () => {
-      const damageToBot = Math.max(1, player.dmg - bot.def);
-      bot.hp -= damageToBot;
-      if (bot.hp < 0) bot.hp = 0;
-      document.getElementById("bot-hp").textContent = "❤️ " + bot.hp;
-      if (bot.hp <= 0) return endBattle(true);
-
-      const damageToPlayer = Math.max(1, bot.dmg - player.def);
-      player.hp -= damageToPlayer;
-      if (player.hp < 0) player.hp = 0;
-      document.getElementById("player-hp").textContent = "❤️ " + player.hp;
-      if (player.hp <= 0) return endBattle(false);
-
-      document.getElementById("log").textContent = `Ты нанёс ${damageToBot}, бот ответил ${damageToPlayer}`;
-    };
-
-    function endBattle(victory) {
-      show("screen-result");
-      const title = document.getElementById("result-title");
-      const img = document.getElementById("result-img");
-      if (victory) {
-        title.textContent = "🏆 Победа!";
-        title.className = "text-3xl font-bold text-emerald-400 mb-3";
-        img.src = "https://i.imgur.com/wrY91WQ.png";
-      } else {
-        title.textContent = "☠️ Поражение!";
-        title.className = "text-3xl font-bold text-rose-400 mb-3";
-        img.src = "https://i.imgur.com/zTn0lUF.png";
-      }
-    }
-
-    document.getElementById("backHome").onclick = () => {
-      player = { hp: 120, dmg: 25, def: 10 };
-      bot = { hp: 100, dmg: 20, def: 5 };
-      document.getElementById("player-hp").textContent = "❤️ 120";
-      document.getElementById("bot-hp").textContent = "❤️ 100";
-      show("screen-main");
-    };
-  </script>
+  <script src="js/utils.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>
