@@ -2,7 +2,7 @@ export const skins = [
   {
     id: 0,
     name: "Спайкли",
-    image: "img/skins/spikly.png",
+    image: "https://ued-plus.ru/images/logo.svg",
     hp: 1000,
     attack: 120,
   },
