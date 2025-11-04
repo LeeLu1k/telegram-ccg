@@ -116,6 +116,12 @@
       from { transform: scale(0.7); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
     }
+
+    @keyframes flashGold {
+      0% { color: #fff; }
+      50% { color: #ffeb3b; transform: scale(1.2); }
+      100% { color: #fff; transform: scale(1); }
+    }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
 </head>
@@ -123,7 +129,7 @@
   <div class="top-bar">
     <div>👑 <span id="playerName">Игрок</span></div>
     <div>🏆 <span id="trophies">1200</span></div>
-    <div>💰 <span id="gold">500</span></div>
+    <div>💰 <span id="gold">100</span></div>
   </div>
 
   <div class="arena">
@@ -131,7 +137,7 @@
   </div>
 
   <div class="bottom-menu">
-    <button class="menu-btn">⚔️ Бой</button>
+    <button id="battleBtn" class="menu-btn">⚔️ Бой</button>
     <button class="menu-btn">🃏 Колода</button>
     <button class="menu-btn">🏰 Клан</button>
     <button class="menu-btn">💎 Магазин</button>
@@ -139,15 +145,46 @@
 
   <script>
     const tg = window.Telegram?.WebApp;
+    let username = 'Игрок';
+
     if (tg) {
       tg.expand();
       const user = tg.initDataUnsafe?.user;
       if (user) {
-        document.getElementById('playerName').textContent = user.first_name;
+        username = user.username ? `@${user.username}` : user.first_name;
+        document.getElementById('playerName').textContent = username;
       }
     } else {
       document.querySelector('.arena').innerHTML = '<h3>Запуск возможен только внутри Telegram</h3>';
     }
+
+    // Загрузка баланса
+    let gold = parseInt(localStorage.getItem('gold') || '100');
+    document.getElementById('gold').textContent = gold;
+
+    const goldElement = document.getElementById('gold');
+
+    function updateGold(change) {
+      gold += change;
+      if (gold < 0) gold = 0;
+      localStorage.setItem('gold', gold);
+      goldElement.textContent = gold;
+      goldElement.style.animation = 'flashGold 0.5s';
+      setTimeout(() => goldElement.style.animation = '', 500);
+    }
+
+    // Логика боя
+    const battleBtn = document.getElementById('battleBtn');
+    battleBtn.addEventListener('click', () => {
+      const result = Math.random() < 0.5 ? 'win' : 'lose';
+      if (result === 'win') {
+        updateGold(50);
+        alert('🏆 Победа! +50 золота');
+      } else {
+        updateGold(-20);
+        alert('😞 Поражение! -20 золота');
+      }
+    });
   </script>
 </body>
 </html>
