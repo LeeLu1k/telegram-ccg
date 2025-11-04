@@ -1,61 +1,97 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>⚔️ Mini Battle 3x3</title>
+  <title>Mini Battle 3x3</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-
   <style>
-    /* Градиентный фон с анимацией */
     body {
-      background: linear-gradient(-45deg, #1e1e2f, #121212, #0f2027, #203a43, #2c5364);
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
       background-size: 400% 400%;
       animation: gradientMove 15s ease infinite;
     }
-
     @keyframes gradientMove {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
-
-    /* Мягкий неон вокруг карточек */
     .glass {
       background: rgba(255, 255, 255, 0.06);
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.15);
     }
-
-    button {
-      transition: all 0.25s ease;
-    }
-    button:hover {
-      transform: scale(1.05);
-    }
+    button { transition: all 0.25s ease; }
+    button:hover { transform: scale(1.05); }
   </style>
 </head>
 
 <body class="flex flex-col min-h-screen text-white font-sans overflow-hidden">
-
   <!-- HEADER -->
   <header class="glass flex items-center gap-3 p-4 border-b border-white/10">
     <img id="user-photo" src="" alt="avatar" class="w-10 h-10 rounded-full border-2 border-cyan-400 shadow-md">
     <span id="user-name" class="text-lg font-semibold tracking-wide"></span>
   </header>
 
-  <!-- MAIN -->
-  <main class="flex-1 flex flex-col items-center justify-center text-center p-6">
+  <!-- MAIN CONTAINER -->
+  <main id="screen-main" class="flex-1 flex flex-col items-center justify-center text-center p-6">
     <div class="glass px-6 py-8 rounded-2xl max-w-sm w-full shadow-lg">
-      <h1 class="text-4xl font-bold mb-3 text-cyan-400 drop-shadow-lg">⚔️ Mini Battle 3x3</h1>
-      <p class="text-gray-300 text-sm mb-6">Арена будущего. Побеждай в дуэлях прямо внутри Telegram!</p>
-      <button id="start-btn"
-        class="bg-gradient-to-r from-cyan-500 to-blue-500 py-3 px-10 rounded-xl text-lg font-semibold shadow-md hover:from-blue-400 hover:to-cyan-400">
-        🚀 Начать игру
+      <h1 class="text-4xl font-bold mb-3 text-cyan-400 drop-shadow-lg">🎁 Подарок новичку!</h1>
+      <p class="text-gray-300 text-sm mb-6">Ты получил своего первого героя бесплатно!</p>
+
+      <div class="glass p-4 rounded-xl mb-6">
+        <img src="https://i.imgur.com/XxMT8gh.png" alt="hero" class="mx-auto w-24 h-24 mb-3 rounded-full border-2 border-cyan-400 shadow">
+        <h2 class="text-xl font-semibold text-cyan-300">🧙‍♂️ Герой: Новичок</h2>
+        <ul class="text-gray-300 text-sm mt-3 space-y-1">
+          <li>❤️ HP: <b>120</b></li>
+          <li>⚔️ Урон: <b>25</b></li>
+          <li>🛡️ Щит: <b>10</b></li>
+          <li>💰 Цена: <b class="text-green-400">Бесплатно</b></li>
+        </ul>
+      </div>
+
+      <button id="battle-btn"
+        class="bg-gradient-to-r from-emerald-500 to-cyan-500 py-3 px-8 rounded-xl text-lg font-semibold shadow-md hover:from-cyan-400 hover:to-emerald-400">
+        ⚔️ Сразиться с ботом
       </button>
     </div>
+  </main>
+
+  <!-- BATTLE SCREEN -->
+  <main id="screen-battle" class="hidden flex-1 flex-col items-center justify-center p-6 text-center">
+    <h2 class="text-3xl font-bold text-cyan-400 mb-4">Битва начинается!</h2>
+    <div class="flex justify-between w-full max-w-md mb-6">
+      <!-- Player -->
+      <div class="glass p-4 rounded-xl w-[45%]">
+        <img src="https://i.imgur.com/XxMT8gh.png" alt="player" class="mx-auto w-20 h-20 mb-2 rounded-full border-2 border-cyan-400">
+        <h3 class="text-cyan-300 font-semibold mb-2">🧙‍♂️ Новичок</h3>
+        <div id="player-stats" class="text-sm text-gray-300 space-y-1">
+          <p>❤️ HP: <b id="player-hp">120</b></p>
+          <p>⚔️ Урон: <b>25</b></p>
+          <p>🛡️ Щит: <b>10</b></p>
+        </div>
+      </div>
+
+      <!-- Bot -->
+      <div class="glass p-4 rounded-xl w-[45%]">
+        <img src="https://i.imgur.com/saYgEfe.png" alt="bot" class="mx-auto w-20 h-20 mb-2 rounded-full border-2 border-rose-400">
+        <h3 class="text-rose-300 font-semibold mb-2">🤖 Бот-Гоблин</h3>
+        <div id="bot-stats" class="text-sm text-gray-300 space-y-1">
+          <p>❤️ HP: <b id="bot-hp">100</b></p>
+          <p>⚔️ Урон: <b>20</b></p>
+          <p>🛡️ Щит: <b>5</b></p>
+        </div>
+      </div>
+    </div>
+
+    <button id="attack-btn"
+      class="bg-gradient-to-r from-pink-500 to-rose-500 py-3 px-8 rounded-xl text-lg font-semibold shadow-md hover:from-rose-400 hover:to-pink-400">
+      🗡️ Атаковать
+    </button>
+
+    <p id="battle-log" class="text-gray-300 mt-4 text-sm min-h-[2rem]"></p>
   </main>
 
   <!-- FOOTER -->
@@ -68,25 +104,54 @@
     tg.expand();
     tg.ready();
 
+    // Telegram user info
     const user = tg.initDataUnsafe?.user;
-    const name = document.getElementById("user-name");
-    const photo = document.getElementById("user-photo");
+    document.getElementById("user-name").textContent = user ? (user.first_name + (user.last_name ? " " + user.last_name : "")) : "Гость";
+    document.getElementById("user-photo").src = user?.photo_url || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
-    if (user) {
-      name.textContent = user.first_name + (user.last_name ? " " + user.last_name : "");
-      photo.src = user.photo_url || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-    } else {
-      name.textContent = "Гость";
-      photo.src = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-    }
+    // DOM
+    const screenMain = document.getElementById("screen-main");
+    const screenBattle = document.getElementById("screen-battle");
+    const battleBtn = document.getElementById("battle-btn");
+    const attackBtn = document.getElementById("attack-btn");
+    const log = document.getElementById("battle-log");
 
-    // Кнопка "Начать игру"
-    document.getElementById("start-btn").addEventListener("click", () => {
-      tg.showPopup({
-        title: "⚔️ Арена в разработке",
-        message: "Скоро вы сможете сразиться 3x3 в реальном времени!",
-        buttons: [{ type: "close" }]
-      });
+    // Статы
+    let player = { hp: 120, dmg: 25, def: 10 };
+    let bot = { hp: 100, dmg: 20, def: 5 };
+
+    battleBtn.addEventListener("click", () => {
+      screenMain.classList.add("hidden");
+      screenBattle.classList.remove("hidden");
+    });
+
+    attackBtn.addEventListener("click", () => {
+      const damageToBot = Math.max(1, player.dmg - bot.def);
+      bot.hp -= damageToBot;
+      if (bot.hp < 0) bot.hp = 0;
+      document.getElementById("bot-hp").textContent = bot.hp;
+
+      if (bot.hp <= 0) {
+        log.textContent = "🎉 Победа! Бот повержен!";
+        attackBtn.disabled = true;
+        attackBtn.textContent = "🏆 Победа!";
+        return;
+      }
+
+      // Ответная атака
+      const damageToPlayer = Math.max(1, bot.dmg - player.def);
+      player.hp -= damageToPlayer;
+      if (player.hp < 0) player.hp = 0;
+      document.getElementById("player-hp").textContent = player.hp;
+
+      if (player.hp <= 0) {
+        log.textContent = "💀 Ты проиграл! Попробуй снова!";
+        attackBtn.disabled = true;
+        attackBtn.textContent = "☠️ Проигрыш";
+        return;
+      }
+
+      log.textContent = `Ты нанёс ${damageToBot} урона, Бот ответил на ${damageToPlayer}.`;
     });
   </script>
 </body>
