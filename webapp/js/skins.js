@@ -1,87 +1,42 @@
-export const cards = [
+export const skins = [
   {
     id: 1,
-    name: "Spikly",
-    type: "🌿 Необычный",
-    rarity: "uncommon",
-    level: 1,
-    hp: 700,
+    name: "Спайкли",
+    type: "Стрелок",
+    hp: 1200,
     attack: 180,
-    defense: 60,
+    defense: 40,
+    price: 0,
     image: "img/skins/spikly.png",
-    description: "Колючий защитник природы, даром дан новичкам."
   },
   {
     id: 2,
-    name: "Bullit",
-    type: "💥 Обычный",
-    rarity: "common",
-    level: 1,
-    hp: 600,
-    attack: 150,
-    defense: 40,
+    name: "Буллит",
+    type: "Танкист",
+    hp: 2000,
+    attack: 160,
+    defense: 80,
+    price: 150,
     image: "img/skins/bullit.png",
-    description: "Простой, но надёжный стрелок."
   },
   {
     id: 3,
-    name: "Frosty",
-    type: "❄️ Редкий",
-    rarity: "rare",
-    level: 1,
-    hp: 900,
-    attack: 200,
-    defense: 80,
-    image: "img/skins/frosty.png",
-    description: "Морозный маг, способный замораживать противников."
+    name: "Лунара",
+    type: "Маг",
+    hp: 1300,
+    attack: 210,
+    defense: 50,
+    price: 200,
+    image: "img/skins/lunara.png",
   },
   {
     id: 4,
-    name: "Inferno",
-    type: "🔥 Эпический",
-    rarity: "epic",
-    level: 1,
+    name: "Блейд",
+    type: "Ассасин",
     hp: 1000,
     attack: 250,
-    defense: 90,
-    image: "img/skins/inferno.png",
-    description: "Огненный воин, пылающий яростью битвы."
+    defense: 30,
+    price: 250,
+    image: "img/skins/blade.png",
   },
-  {
-    id: 5,
-    name: "Shadow",
-    type: "🌑 Легендарный",
-    rarity: "legendary",
-    level: 1,
-    hp: 1200,
-    attack: 300,
-    defense: 120,
-    image: "img/skins/shadow.png",
-    description: "Мастер теней, наносит удары из невидимости."
-  }
 ];
-
-// ---- подарок новичку (сохранение в localStorage) ----
-
-if (!localStorage.getItem("playerSkins")) {
-  // при первом входе выдаём spikly (id:1)
-  const starter = cards.find(c => c.id === 1);
-  localStorage.setItem("playerSkins", JSON.stringify([starter]));
-  console.log("🎁 Новый игрок! Выдан бесплатный скин:", starter.name);
-}
-
-export function getOwnedSkins() {
-  try {
-    return JSON.parse(localStorage.getItem("playerSkins")) || [];
-  } catch {
-    return [];
-  }
-}
-
-export function addSkin(skin) {
-  const owned = getOwnedSkins();
-  if (!owned.find(s => s.id === skin.id)) {
-    owned.push(skin);
-    localStorage.setItem("playerSkins", JSON.stringify(owned));
-  }
-}
