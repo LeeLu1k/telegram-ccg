@@ -1,14 +1,14 @@
 export function getUser() {
-  const data = JSON.parse(localStorage.getItem("playerData") || "{}");
+  const data = JSON.parse(localStorage.getItem('player') || '{}');
   return {
     balance: data.balance || 0,
+    selectedSkin: data.selectedSkin || 1,
+    ownedSkins: data.ownedSkins || [1],
     level: data.level || 1,
     exp: data.exp || 0,
-    ownedSkins: data.ownedSkins || [1], // по умолчанию первый
-    selectedSkin: data.selectedSkin || 1,
   };
 }
 
-export function saveUser(data) {
-  localStorage.setItem("playerData", JSON.stringify(data));
+export function saveUser(user) {
+  localStorage.setItem('player', JSON.stringify(user));
 }
