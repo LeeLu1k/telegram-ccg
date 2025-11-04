@@ -59,6 +59,10 @@ function refreshHomeScreen() {
       <div class="flex flex-col items-center mt-2">
         <p class="text-gray-400 text-sm">Уровень: ${user.level}</p>
         <img src="${rankImg}" alt="Ранг" class="w-14 h-14 mt-1 rounded-full border border-white/30 shadow-lg" />
+        <div class="w-40 bg-gray-700 rounded-full h-3 mt-2 relative">
+          <div class="bg-blue-400 h-3 rounded-full transition-all duration-500" style="width:${Math.min(100, (user.xp / (user.level * 200)) * 100)}%"></div>
+        </div>
+        <p class="text-gray-400 text-xs mt-1">${user.xp} / ${user.level * 200} XP</p>
       </div>
 
       <button id="startBattle" class="mt-5 bg-gradient-to-r from-cyan-500 to-blue-500 px-8 py-3 rounded-xl text-white font-semibold hover:scale-105 transition">
