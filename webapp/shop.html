@@ -1,34 +1,33 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Магазин — Карточная Арена</title>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Арена — Магазин</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="wrap">
-    <header class="topbar">
-      <div class="back"><button class="small-btn" data-href="index.html">◀ Назад</button></div>
-      <div class="player">🛒 <span id="playerName">Игрок</span></div>
-      <div class="gold">💰 <span id="gold">100</span></div>
+  <div class="shell">
+    <header class="top">
+      <div><button class="small" data-href="index.html">◀ Назад</button></div>
+      <div class="player">🏪 <span id="playerName">Игрок</span></div>
+      <div class="stats">💰 <span id="gold">100</span></div>
     </header>
 
-    <main class="main-area">
-      <section class="arena-card">
-        <h2 class="pixel-title">МАГАЗИН</h2>
-        <div id="shopList" class="deck-list"></div>
+    <main class="main">
+      <section class="shop card">
+        <h2>Магазин героев</h2>
+        <div id="shopList" class="shop-grid"></div>
+        <p class="muted">Купи героя — он появится в разделе «Мои герои».</p>
       </section>
     </main>
   </div>
 
   <script src="app.js"></script>
   <script>
-    // init
-    drawArenaCanvas(''); // no canvas here, safe call (function checks)
     attachNavButtons();
-    renderShop();
+    document.addEventListener('DOMContentLoaded', () => { updateUIAll(); renderShop(); });
   </script>
 </body>
 </html>
